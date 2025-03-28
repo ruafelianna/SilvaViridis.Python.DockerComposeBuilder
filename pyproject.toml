@@ -7,6 +7,7 @@ authors = [
 ]
 dependencies = [
     "beartype>=0.20",
+    "silvaviridis-python-common @ https://github.com/ruafelianna/SilvaViridis.Python.Common/releases/download/v0.7.2/silvaviridis_python_common-0.7.2-py3-none-any.whl",
 ]
 requires-python = ">=3.13"
 readme = "README.md"
@@ -37,7 +38,7 @@ sh -c ' \\
     ; find . -type d -name __pycache__ -exec rm -rf {} + \\
 '
 """
-build = """
+build.cmd = """
 sh -c ' \\
     pdm install -d \\
     && pdm run pyright \\
@@ -45,10 +46,13 @@ sh -c ' \\
     && pdm build \\
 '
 """
-test = """
+build.env_file = "tests/test.env"
+#TODO: remove ignore flag, when beartype is able to process recursive type definitions
+test.cmd = """
 sh -c ' \\
-    pdm run coverage run -m pytest -s \\
+    pdm run coverage run -m pytest -rsfE -W "ignore::beartype.roar.BeartypeClawDecorWarning" \\
     && pdm run coverage html \\
 '\\
 """
+test.env_file = "tests/test.env"
 update_lock = "pdm lock -G:all"

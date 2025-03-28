@@ -5,7 +5,7 @@
 groups = ["default", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:d7bd961c00239f86a63012139a6eba43b5ad61a97a49517ee4c7adb30d77ff4a"
+content_hash = "sha256:a6bbdf4911c5013d1d967e68bbfec619c916ba61a7fd6914b7fd8b32053dac25"
 
 [[metadata.targets]]
 requires_python = ">=3.13"
@@ -154,6 +154,20 @@ dependencies = [
 files = [
     {file = "pytest-custom_exit_code-0.3.0.tar.gz", hash = "sha256:51ffff0ee2c1ddcc1242e2ddb2a5fd02482717e33a2326ef330e3aa430244635"},
     {file = "pytest_custom_exit_code-0.3.0-py3-none-any.whl", hash = "sha256:6e0ce6e57ce3a583cb7e5023f7d1021e19dfec22be41d9ad345bae2fc61caf3b"},
+]
+
+[[package]]
+name = "silvaviridis-python-common"
+version = "0.7.2"
+requires_python = ">=3.13"
+url = "https://github.com/ruafelianna/SilvaViridis.Python.Common/releases/download/v0.7.2/silvaviridis_python_common-0.7.2-py3-none-any.whl"
+summary = "Useful tools for python projects."
+groups = ["default"]
+dependencies = [
+    "beartype>=0.20",
+]
+files = [
+    {file = "silvaviridis_python_common-0.7.2-py3-none-any.whl", hash = "sha256:8bae9492b4f81ff4c7f6c6a415ebeb70dd8e0d44b17392a0510cce768e7457b1"},
 ]
 
 [[package]]

@@ -30,8 +30,8 @@ git clone git@github.com:ruafelianna/SilvaViridis.Python.DockerComposeBuilder.gi
 ### PDM Scripts
 
 - `pdm run clean` - cleans build and test files.
-- `pdm run build` - installs dependencies, runs static type checker and tests, builds a package.
-- `pdm run test` - runs tests with coverage report.
+- `pdm run build` - installs dependencies, runs static type checker and tests, builds a package. Uses `tests/test.env` file.
+- `pdm run test` - runs tests with coverage report. Uses `tests/test.env` file.
 - `pdm run update_lock` - updates `pdm.lock` file.
 
 ### Documentation
