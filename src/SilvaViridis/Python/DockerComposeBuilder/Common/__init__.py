@@ -4,6 +4,7 @@ from ._Types import (
 
 from .OS import OS
 from .Path import Path, PathValidator, PathTypeHint
+from .SELinuxRelabelingOption import SELinuxRelabelingOption
 
 __all__ = [
     "Configuration",
@@ -11,4 +12,5 @@ __all__ = [
     "Path",
     "PathValidator",
     "PathTypeHint",
+    "SELinuxRelabelingOption",
 ]
