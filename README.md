@@ -1,4 +1,4 @@
-# SilvaViridis.Python.TemplateProject
+# SilvaViridis.Python.DockerComposeBuilder
 
 Template python project
 
@@ -15,8 +15,8 @@ Template python project
 2. Execute in your shell
 
 ```sh
-git clone git@github.com:ruafelianna/SilvaViridis.Python.TemplateProject.git \
-    && cd SilvaViridis.Python.TemplateProject \
+git clone git@github.com:ruafelianna/SilvaViridis.Python.DockerComposeBuilder.git \
+    && cd SilvaViridis.Python.DockerComposeBuilder \
     && chmod u+x scripts/*.sh \
     && ./scripts/setup.sh
 ```
