@@ -13,8 +13,8 @@ from ..fixtures import non_models
 nocopy_values : list[bool | None] = [True, False, None]
 
 subpath_values : list[PathTypeHint | None] = [
-    Path("/some/posix/path"),
-    Path("C:\\some\\nt\\path", OS.NT),
+    Path(path = "/some/posix/path"),
+    Path(path = "C:\\some\\nt\\path", os = OS.NT),
     None,
 ]
 

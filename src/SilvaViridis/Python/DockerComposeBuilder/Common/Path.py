@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from ntpath import join as nt_path_join
 from posixpath import join as posix_path_join
-from pydantic import validate_call
+from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Annotated, Any
 
 from SilvaViridis.Python.Common.Collections import NonEmptySequence
@@ -12,27 +12,18 @@ from SilvaViridis.Python.Common.Validation import create_validator__is_instance
 
 from .OS import OS
 
-class Path:
-    @validate_call
-    def __init__(
-        self,
-        path : NonEmptyString,
-        os : OS = OS.POSIX,
-    ):
-        self._path = path
-        self._os = os
+_os_mapping : dict[OS, Callable[..., str]] = {
+    OS.NT: nt_path_join,
+    OS.POSIX : posix_path_join,
+}
 
-    @property
-    def path(
-        self,
-    ) -> str:
-        return self._path
+class Path(BaseModel):
+    path : NonEmptyString
+    os : OS = Field(default = OS.POSIX)
 
-    @property
-    def os(
-        self,
-    ) -> OS:
-        return self._os
+    model_config = ConfigDict(
+        frozen = True,
+    )
 
     @staticmethod
     def join(
@@ -41,7 +32,7 @@ class Path:
     ) -> str:
         if any([p.os != os for p in paths if isinstance(p, Path)]):
             raise ValueError("Cannot combine path parts of different OS interfaces")
-        join_func = Path._os_mapping[os]
+        join_func = _os_mapping[os]
         return join_func(*(str(p) for p in paths))
 
     def __str__(
@@ -70,11 +61,6 @@ class Path:
             "path": self.path,
             "os" : self.os,
         })
-
-    _os_mapping : dict[OS, Callable[..., str]] = {
-        OS.NT: nt_path_join,
-        OS.POSIX : posix_path_join,
-    }
 
 PathValidator = create_validator__is_instance((Path,))
 

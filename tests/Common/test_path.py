@@ -27,7 +27,7 @@ posix_path_parts : list[str | Path] = ["/", "some", "posix", "path"]
 
 @pytest.mark.parametrize("path,os", all_paths)
 def test_create(path : str, os : OS):
-    path_obj = Path(path, os)
+    path_obj = Path(path = path, os = os)
     assert (path_obj.path, path_obj.os) == (path, os)
 
 
@@ -35,7 +35,7 @@ def test_create(path : str, os : OS):
 @pytest.mark.parametrize("path", empty)
 @pytest.mark.parametrize("os", OS)
 def test_create_fail(path : str, os : OS):
-    Path(path, os)
+    Path(path = path, os = os)
 
 ## API
 
@@ -44,7 +44,7 @@ def test_create_fail(path : str, os : OS):
     (posix_path_parts, OS.POSIX, posix_paths[0], OS.POSIX),
 ])
 def test_join(parts : list[str | Path], os_parts : OS, path : str, os_path : OS):
-    parts[3] = Path(str(parts[3]), os_path)
+    parts[3] = Path(path = str(parts[3]), os = os_path)
     assert Path.join(os_parts, parts) == path
 
 
@@ -54,7 +54,7 @@ def test_join(parts : list[str | Path], os_parts : OS, path : str, os_path : OS)
     (posix_path_parts, OS.POSIX, OS.NT),
 ])
 def test_join_value_fail(parts : list[str | Path], os_parts : OS, os_path : OS):
-    parts[3] = Path(str(parts[3]), os_path)
+    parts[3] = Path(path = str(parts[3]), os = os_path)
     Path.join(os_parts, parts)
 
 
@@ -74,29 +74,29 @@ def test_join_validation_fail(parts : list[str | Path], os_parts : OS):
 
 @pytest.mark.parametrize("path,os", all_paths)
 def test_str(path : str, os : OS):
-    assert str(Path(path, os)) == path
+    assert str(Path(path = path, os = os)) == path
 
 ## EQUALITY
 
 @pytest.mark.parametrize("path1,os1", all_paths)
 @pytest.mark.parametrize("path2,os2", all_paths)
 def test_equal(path1 : str, os1 : OS, path2 : str, os2 : OS):
-    assert (Path(path1, os1) == Path(path2, os2)) == (path1 == path2)
+    assert (Path(path = path1, os = os1) == Path(path = path2, os = os2)) == (path1 == path2)
 
 
 @pytest.mark.parametrize("path,os", all_paths)
 @pytest.mark.parametrize("other", non_models + all_paths_str)
 def test_not_equal(path : str, os : OS, other : Any):
-    assert Path(path, os) != other
+    assert Path(path = path, os = os) != other
 
 ## HASH
 
 @pytest.mark.parametrize("path,os", all_paths)
 def test_hash(path : str, os : OS):
-    assert hash(Path(path, os)) == hash(path)
+    assert hash(Path(path = path, os = os)) == hash(path)
 
 ## REPR
 
 @pytest.mark.parametrize("path,os", all_paths)
 def test_repr(path : str, os : OS):
-    assert repr(Path(path, os)) == f"{{'path': {repr(path)}, 'os': {repr(os)}}}"
+    assert repr(Path(path = path, os = os)) == f"{{'path': {repr(path)}, 'os': {repr(os)}}}"
