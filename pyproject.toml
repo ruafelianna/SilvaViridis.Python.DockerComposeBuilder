@@ -42,8 +42,10 @@ pdm install -d \\
     && pdm run pytest --suppress-no-test-exit-code \\
     && pdm build
 """
+build.env_file = "tests/test.env"
 test.composite = [
     "pdm run coverage run -m pytest -rsfEX {args}",
     "pdm run coverage html",
 ]
+test.env_file = "tests/test.env"
 update_lock.cmd = "pdm lock -G:all"
