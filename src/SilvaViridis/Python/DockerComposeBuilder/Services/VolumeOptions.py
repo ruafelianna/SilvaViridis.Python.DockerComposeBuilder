@@ -4,7 +4,7 @@ from pydantic import validate_call
 from typing import Any
 
 from .IVolumeOptions import IVolumeOptions
-from ..Common import Configuration, PathTypeHint
+from ..Common import Configuration, Path
 
 class VolumeOptions(IVolumeOptions):
     @validate_call
@@ -12,7 +12,7 @@ class VolumeOptions(IVolumeOptions):
         self,
         /,
         nocopy : bool | None = None,
-        subpath : PathTypeHint | None = None,
+        subpath : Path | None = None,
     ) -> None:
         self._nocopy = nocopy
         self._subpath = subpath
@@ -26,7 +26,7 @@ class VolumeOptions(IVolumeOptions):
     @property
     def subpath(
         self,
-    ) -> PathTypeHint | None:
+    ) -> Path | None:
         return self._subpath
 
     @validate_call

@@ -4,11 +4,10 @@ from collections.abc import Callable
 from ntpath import join as nt_path_join
 from posixpath import join as posix_path_join
 from pydantic import BaseModel, ConfigDict, Field, validate_call
-from typing import Annotated, Any
+from typing import Any
 
 from SilvaViridis.Python.Common.Collections import NonEmptySequence
 from SilvaViridis.Python.Common.Text import NonEmptyString
-from SilvaViridis.Python.Common.Validation import create_validator__is_instance
 
 from .OS import OS
 
@@ -28,7 +27,7 @@ class Path(BaseModel):
     @staticmethod
     def join(
         os : OS,
-        paths : NonEmptySequence[PathTypeHint | NonEmptyString],
+        paths : NonEmptySequence[Path | NonEmptyString],
     ) -> str:
         if any([p.os != os for p in paths if isinstance(p, Path)]):
             raise ValueError("Cannot combine path parts of different OS interfaces")
@@ -61,9 +60,5 @@ class Path(BaseModel):
             "path": self.path,
             "os" : self.os,
         })
-
-PathValidator = create_validator__is_instance((Path,))
-
-type PathTypeHint = Annotated[Any, PathValidator]
 
 Path.join = validate_call(Path.join)
