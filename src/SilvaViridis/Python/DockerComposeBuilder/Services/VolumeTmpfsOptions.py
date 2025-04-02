@@ -2,7 +2,7 @@ from pydantic import validate_call
 from typing import Any
 
 from SilvaViridis.Python.Common.Numbers import PositiveInt
-from SilvaViridis.Python.Common.Unix import UnixPermissionTypeHint
+from SilvaViridis.Python.Common.Unix import UnixPermissions
 
 from .IVolumeOptions import IVolumeOptions
 from ..Common import Configuration
@@ -13,7 +13,7 @@ class VolumeTmpfsOptions(IVolumeOptions):
         self,
         /,
         size : PositiveInt | None = None,
-        mode : UnixPermissionTypeHint | None = None,
+        mode : UnixPermissions | None = None,
     ):
         self._size = size
         self._mode = mode
@@ -27,7 +27,7 @@ class VolumeTmpfsOptions(IVolumeOptions):
     @property
     def mode(
         self,
-    ) -> UnixPermissionTypeHint | None:
+    ) -> UnixPermissions | None:
         return self._mode
 
     @validate_call

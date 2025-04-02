@@ -8,7 +8,7 @@ from typing import Annotated, Any
 
 from SilvaViridis.Python.Common.Collections import NonEmptySequence
 from SilvaViridis.Python.Common.Text import NonEmptyString
-from SilvaViridis.Python.Common.Validation import create_validator
+from SilvaViridis.Python.Common.Validation import create_validator__is_instance
 
 from .OS import OS
 
@@ -76,7 +76,7 @@ class Path:
         OS.POSIX : posix_path_join,
     }
 
-PathValidator = create_validator(Path)
+PathValidator = create_validator__is_instance((Path,))
 
 type PathTypeHint = Annotated[Any, PathValidator]
 

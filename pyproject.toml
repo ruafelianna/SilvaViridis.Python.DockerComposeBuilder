@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "pydantic>=2.11",
-    "silvaviridis-python-common @ https://github.com/ruafelianna/SilvaViridis.Python.Common/releases/download/v0.8.1/silvaviridis_python_common-0.8.1-py3-none-any.whl",
+    "silvaviridis-python-common @ https://github.com/ruafelianna/SilvaViridis.Python.Common/releases/download/v0.9.0/silvaviridis_python_common-0.9.0-py3-none-any.whl",
 ]
 requires-python = ">=3.13"
 readme = "README.md"
