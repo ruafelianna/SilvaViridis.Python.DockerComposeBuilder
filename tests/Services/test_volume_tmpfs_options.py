@@ -29,14 +29,14 @@ prod_size_mode = list(product(size_values, mode_values))
 
 @pytest.mark.parametrize("size,mode", prod_size_mode)
 def test_create(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size, mode)
+    options = VolumeTmpfsOptions(size = size, mode = mode)
     assert (options.size, options.mode) == (size, mode)
 
 ## API
 
 @pytest.mark.parametrize("size,mode", prod_size_mode)
 def test_full_options(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size, mode)
+    options = VolumeTmpfsOptions(size = size, mode = mode)
     expected : dict[str, str | None] = {
         "size": None if size is None else str(size),
         "mode": None if mode is None else mode.as_octal(),
@@ -49,27 +49,27 @@ def test_full_options(size : int | None, mode : UnixPermissions | None):
 @pytest.mark.parametrize("size1,mode1", prod_size_mode)
 @pytest.mark.parametrize("size2,mode2", prod_size_mode)
 def test_equal(size1 : int | None, mode1 : UnixPermissions | None, size2 : bool | None, mode2 : UnixPermissions | None):
-    options1 = VolumeTmpfsOptions(size1, mode1)
-    options2 = VolumeTmpfsOptions(size2, mode2)
+    options1 = VolumeTmpfsOptions(size = size1, mode = mode1)
+    options2 = VolumeTmpfsOptions(size = size2, mode = mode2)
     assert (options1 == options2) == (size1 == size2 and mode1 == mode2)
 
 
 @pytest.mark.parametrize("size,mode", prod_size_mode)
 @pytest.mark.parametrize("other", non_models)
 def test_not_equal(size : int | None, mode : UnixPermissions | None, other : Any):
-    options = VolumeTmpfsOptions(size, mode)
+    options = VolumeTmpfsOptions(size = size, mode = mode)
     assert options != other
 
 ## HASH
 
 @pytest.mark.parametrize("size,mode", prod_size_mode)
 def test_hash(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size, mode)
+    options = VolumeTmpfsOptions(size = size, mode = mode)
     assert hash(options) == hash((size, mode))
 
 ## REPR
 
 @pytest.mark.parametrize("size,mode", prod_size_mode)
 def test_repr(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size, mode)
+    options = VolumeTmpfsOptions(size = size, mode = mode)
     assert repr(options) == f"{{'size': {repr(size)}, 'mode': {repr(mode)}}}"

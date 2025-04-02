@@ -1,34 +1,18 @@
-from pydantic import validate_call
+from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Any
 
 from SilvaViridis.Python.Common.Numbers import PositiveInt
 from SilvaViridis.Python.Common.Unix import UnixPermissions
 
-from .IVolumeOptions import IVolumeOptions
 from ..Common import Configuration
 
-class VolumeTmpfsOptions(IVolumeOptions):
-    @validate_call
-    def __init__(
-        self,
-        /,
-        size : PositiveInt | None = None,
-        mode : UnixPermissions | None = None,
-    ):
-        self._size = size
-        self._mode = mode
+class VolumeTmpfsOptions(BaseModel):
+    size : PositiveInt | None = Field(default = None)
+    mode : UnixPermissions | None = Field(default = None)
 
-    @property
-    def size(
-        self,
-    ) -> int | None:
-        return self._size
-
-    @property
-    def mode(
-        self,
-    ) -> UnixPermissions | None:
-        return self._mode
+    model_config = ConfigDict(
+        frozen = True,
+    )
 
     @validate_call
     def get_full_options(

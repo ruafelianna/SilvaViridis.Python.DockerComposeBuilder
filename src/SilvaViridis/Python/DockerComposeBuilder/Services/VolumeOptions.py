@@ -1,33 +1,17 @@
 from __future__ import annotations
 
-from pydantic import validate_call
+from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Any
 
-from .IVolumeOptions import IVolumeOptions
 from ..Common import Configuration, Path
 
-class VolumeOptions(IVolumeOptions):
-    @validate_call
-    def __init__(
-        self,
-        /,
-        nocopy : bool | None = None,
-        subpath : Path | None = None,
-    ) -> None:
-        self._nocopy = nocopy
-        self._subpath = subpath
+class VolumeOptions(BaseModel):
+    nocopy : bool | None = Field(default = None)
+    subpath : Path | None = Field(default = None)
 
-    @property
-    def nocopy(
-        self,
-    ) -> bool | None:
-        return self._nocopy
-
-    @property
-    def subpath(
-        self,
-    ) -> Path | None:
-        return self._subpath
+    model_config = ConfigDict(
+        frozen = True,
+    )
 
     @validate_call
     def get_full_options(
