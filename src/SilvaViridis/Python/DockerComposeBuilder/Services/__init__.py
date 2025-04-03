@@ -1,3 +1,4 @@
+from .EnvVar import EnvVar
 from .IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
 from .Port import Port, TPort, TPortRange
 from .Volume import Volume
@@ -8,6 +9,7 @@ from .VolumeTmpfsOptions import VolumeTmpfsOptions
 from .VolumeType import VolumeType
 
 __all__ = [
+    "EnvVar",
     "IVolumeOptions",
     "IVolumeOptionsTypeHint",
     "IVolumeOptionsValidator",
