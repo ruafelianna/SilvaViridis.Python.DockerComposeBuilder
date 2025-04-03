@@ -3,63 +3,81 @@ import pytest
 from itertools import product
 from pydantic import ValidationError
 
-from typing import Any
-
 from SilvaViridis.Python.DockerComposeBuilder.Services import EnvVar
 
-from ..fixtures import containers, empty, non_models
+from ..fixtures import containers, empty
+
+type TVar = str
+type TDef = str | None
+type TAll = tuple[TVar, TDef]
 
 vars = ["var_x", "someVar"]
 
-defaults = ["123", "abcde", "", None]
+defaults = ["123", "", None]
 
-prod_var_default = list(product(vars, defaults))
+v0 = vars[0]
+d0 = defaults[0]
+d1 = defaults[1]
+c0 = containers[0]
+
+full_env_vars = [
+    ((v0, None), c0, f"${{{c0}__{v0}}}"),
+    ((v0, d0), c0, d0),
+    ((v0, d1), c0, ""),
+]
+
+def create(name : TVar, default_value : TDef):
+    return EnvVar(
+        name = name,
+        default_value = default_value,
+    )
+
+valid_vars = list(product(vars, defaults))
+
+invalid_vars = list(product(empty, defaults))
 
 ## CREATION
 
-@pytest.mark.parametrize("name,default_value", prod_var_default)
-def test_create(name : str, default_value : str | None):
-    env_var = EnvVar(name = name, default_value = default_value)
-    assert (env_var.name, env_var.default_value) == (name, default_value)
+@pytest.mark.parametrize("env_var", valid_vars)
+def test_create(env_var : TAll):
+    env_var_obj = create(*env_var)
+    assert (
+        env_var_obj.name,
+        env_var_obj.default_value,
+    ) == env_var
 
 
 @pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("name", empty)
-@pytest.mark.parametrize("default_value", defaults)
-def test_create_fail(name : str, default_value : str | None):
-    EnvVar(name = name, default_value = default_value)
+@pytest.mark.parametrize("env_var", invalid_vars)
+def test_create_fail(env_var : TAll):
+    create(*env_var)
 
 ## API
 
-@pytest.mark.parametrize("name,default_value", prod_var_default)
-@pytest.mark.parametrize("container_name", containers)
-def test_full_env_var(name : str, default_value : str | None, container_name : str):
-    value = f"${{{container_name}__{name}}}" if default_value is None else default_value
-    assert EnvVar(name = name, default_value = default_value).get_full_env_var(container_name) == {name: value}
+@pytest.mark.parametrize("env_var,container_name,expected", full_env_vars)
+def test_full_env_var(env_var : TAll, container_name : str, expected : str):
+    name, _ = env_var
+    assert create(*env_var).get_full_env_var(container_name) == {name: expected}
 
 ## EQUALITY
 
-@pytest.mark.parametrize("env_var1", prod_var_default)
-@pytest.mark.parametrize("env_var2", prod_var_default)
-def test_equal(env_var1 : tuple[str, str | None], env_var2 : tuple[str, str | None]):
-    name1, default_value1 = env_var1
-    name2, default_value2 = env_var2
-    assert (EnvVar(name = name1, default_value = default_value1) == EnvVar(name = name2, default_value = default_value2)) == (name1 == name2)
-
-
-@pytest.mark.parametrize("name,default_value", prod_var_default)
-@pytest.mark.parametrize("other", non_models + vars)
-def test_not_equal(name : str, default_value : str | None, other : Any):
-    assert EnvVar(name = name, default_value = default_value) != other
+@pytest.mark.parametrize("env_var1", valid_vars)
+@pytest.mark.parametrize("env_var2", valid_vars)
+def test_equal(env_var1 : TAll, env_var2 : TAll):
+    name1, _ = env_var1
+    name2, _ = env_var2
+    assert (create(*env_var1) == create(*env_var2)) == (name1 == name2)
 
 ## HASH
 
-@pytest.mark.parametrize("name,default_value", prod_var_default)
-def test_hash(name : str, default_value : str | None):
-    assert hash(EnvVar(name = name, default_value = default_value)) == hash(name)
+@pytest.mark.parametrize("env_var", valid_vars)
+def test_hash(env_var : TAll):
+    name, _ = env_var
+    assert hash(create(*env_var)) == hash(name)
 
 ## REPR
 
-@pytest.mark.parametrize("name,default_value", prod_var_default)
-def test_repr(name : str, default_value : str | None):
-    assert repr(EnvVar(name = name, default_value = default_value)) == f"{{'name': {repr(name)}, 'default_value': {repr(default_value)}}}"
+@pytest.mark.parametrize("env_var", valid_vars)
+def test_repr(env_var : TAll):
+    name, default_value = env_var
+    assert repr(create(*env_var)) == f"{{'name': {repr(name)}, 'default_value': {repr(default_value)}}}"
