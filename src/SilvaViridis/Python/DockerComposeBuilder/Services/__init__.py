@@ -1,4 +1,5 @@
 from .IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
+from .Port import Port, TPort, TPortRange
 from .Volume import Volume
 from .VolumeAccessMode import VolumeAccessMode
 from .VolumeBindOptions import VolumeBindOptions
@@ -10,6 +11,9 @@ __all__ = [
     "IVolumeOptions",
     "IVolumeOptionsTypeHint",
     "IVolumeOptionsValidator",
+    "Port",
+    "TPort",
+    "TPortRange",
     "Volume",
     "VolumeAccessMode",
     "VolumeBindOptions",
