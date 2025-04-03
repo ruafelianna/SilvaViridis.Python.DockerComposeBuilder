@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
 from typing import Any, Literal, get_args
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from .IVolumeOptions import IVolumeOptions
+from .IVolumeOptions import IVolumeOptionsTypeHint
 from .VolumeAccessMode import VolumeAccessMode
 from .VolumeBindOptions import VolumeBindOptions
 from .VolumeOptions import VolumeOptions
@@ -17,8 +17,9 @@ from ..Config import PathsConfig
 TEmptySource = Literal[""]
 EMPTY_SOURCE = get_args(TEmptySource)[0]
 
+@validate_call
 def _check_options(
-    options : IVolumeOptions | None
+    options : IVolumeOptionsTypeHint | None
 ) -> Configuration | None:
     if options is None:
         return None
@@ -104,6 +105,7 @@ class Volume(BaseModel):
         return self
 
     @staticmethod
+    @validate_call
     def get_full_source(
         source : Path,
         container_name : NonEmptyString,
@@ -117,6 +119,7 @@ class Volume(BaseModel):
             )
         )
 
+    @validate_call
     def get_full_volume(
         self,
         container_name : NonEmptyString,
@@ -173,6 +176,7 @@ class Volume(BaseModel):
             "force_long_syntax": self.force_long_syntax,
         })
 
+    @validate_call
     def _get_short(
         self,
         source : str,
@@ -190,6 +194,7 @@ class Volume(BaseModel):
         return f'{source}:{self.target}{mode}'
 
     @staticmethod
+    @validate_call
     def _combine_access_and_selinux(
         access : str,
         selinux : str,
@@ -203,6 +208,7 @@ class Volume(BaseModel):
         else:
             return f":{selinux}"
 
+    @validate_call
     def _get_long(
         self,
         source : str,
