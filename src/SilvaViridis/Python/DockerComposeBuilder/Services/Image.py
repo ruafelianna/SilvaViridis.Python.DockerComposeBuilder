@@ -32,7 +32,7 @@ class Image(BaseModel):
         registry = "" if self.registry is None else f"{self.registry}/"
         project = "" if self.project is None else f"{self.project}/"
         tag = "" if self.tag is None else f":{self.tag}"
-        digest = "" if self.digest is None else f"@{self.digest[0]}:{self.digest[1]}"
+        digest = "" if self.digest is None else f"@{self.digest[0].name}:{self.digest[1]}"
         return {
             "image": f"{registry}{project}{self.image}{tag}{digest}",
         }
