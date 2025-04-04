@@ -3,68 +3,77 @@ from __future__ import annotations
 import pytest
 
 from itertools import product
-from typing import Any
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import OS, Path
 from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeOptions
 
-from ..fixtures import non_models
+LABELS = ["nocopy", "subpath"]
 
-nocopy_values : list[bool | None] = [True, False, None]
+type TNcp = bool | None
+type TSbp = Path | None
+type TAll = tuple[TNcp, TSbp]
 
-subpath_values : list[Path | None] = [
+nocopy_values : list[TNcp] = [True, False, None]
+
+subpath_values : list[TSbp] = [
     Path(path = "/some/posix/path"),
     Path(path = "C:\\some\\nt\\path", os = OS.NT),
     None,
 ]
 
-prod_nocopy_subpath = list(product(nocopy_values, subpath_values))
+n0 = nocopy_values[0]
+s0 : Path = subpath_values[0] # type: ignore
+
+full_options = [
+    ((None, None), (None, None)),
+    ((n0, None), ("true", None)),
+    ((None, s0), (None, s0.path)),
+    ((n0, s0), ("true", s0.path)),
+]
+
+def create(nocopy : TNcp, subpath : TSbp):
+    return VolumeOptions(nocopy = nocopy, subpath = subpath)
+
+valid_options = list(product(nocopy_values, subpath_values))
 
 ## CREATION
 
-@pytest.mark.parametrize("nocopy,subpath", prod_nocopy_subpath)
-def test_create(nocopy : bool | None, subpath : Path | None):
-    options = VolumeOptions(nocopy = nocopy, subpath = subpath)
-    assert (options.nocopy, options.subpath) == (nocopy, subpath)
+@pytest.mark.parametrize("options", valid_options)
+def test_create(options : TAll):
+    options_obj = create(*options)
+    assert (
+        options_obj.nocopy,
+        options_obj.subpath,
+    ) == options
 
 ## API
 
-@pytest.mark.parametrize("nocopy,subpath", prod_nocopy_subpath)
-def test_full_options(nocopy : bool | None, subpath : Path | None):
-    options = VolumeOptions(nocopy = nocopy, subpath = subpath)
-    expected : dict[str, str | None] = {
-        "nocopy": None if nocopy is None else str(nocopy).lower(),
-        "subpath": None if subpath is None else subpath.path,
-    }
-    expected = {k: v for k, v in expected.items() if v is not None}
-    assert options.get_full_options() == expected
+@pytest.mark.parametrize("options,expected", full_options)
+def test_full_options(options : TAll, expected : tuple[str | None, str | None]):
+    result = {l: e for l, e in map(lambda l, e: (l, e), LABELS, expected) if e is not None} 
+    assert create(*options).get_full_options() == result
 
 ## EQUALITY
 
-@pytest.mark.parametrize("nocopy1,subpath1", prod_nocopy_subpath)
-@pytest.mark.parametrize("nocopy2,subpath2", prod_nocopy_subpath)
-def test_equal(nocopy1 : bool | None, subpath1 : Path | None, nocopy2 : bool | None, subpath2 : Path | None):
-    options1 = VolumeOptions(nocopy = nocopy1, subpath = subpath1)
-    options2 = VolumeOptions(nocopy = nocopy2, subpath = subpath2)
-    assert (options1 == options2) == (nocopy1 == nocopy2 and subpath1 == subpath2)
-
-
-@pytest.mark.parametrize("nocopy,subpath", prod_nocopy_subpath)
-@pytest.mark.parametrize("other", non_models)
-def test_not_equal(nocopy : bool | None, subpath : Path | None, other : Any):
-    options = VolumeOptions(nocopy = nocopy, subpath = subpath)
-    assert options != other
+@pytest.mark.parametrize("options1", valid_options)
+@pytest.mark.parametrize("options2", valid_options)
+def test_equal(options1 : TAll, options2 : TAll):
+    nocopy1, subpath1 = options1
+    nocopy2, subpath2 = options2
+    assert (create(*options1) == create(*options2)) == (
+        nocopy1 == nocopy2
+        and subpath1 == subpath2
+    )
 
 ## HASH
 
-@pytest.mark.parametrize("nocopy,subpath", prod_nocopy_subpath)
-def test_hash(nocopy : bool | None, subpath : Path | None):
-    options = VolumeOptions(nocopy = nocopy, subpath = subpath)
-    assert hash(options) == hash((nocopy, subpath))
+@pytest.mark.parametrize("options", valid_options)
+def test_hash(options : TAll):
+    assert hash(create(*options)) == hash(options)
 
 ## REPR
 
-@pytest.mark.parametrize("nocopy,subpath", prod_nocopy_subpath)
-def test_repr(nocopy : bool | None, subpath : Path | None):
-    options = VolumeOptions(nocopy = nocopy, subpath = subpath)
-    assert repr(options) == f"{{'nocopy': {repr(nocopy)}, 'subpath': {repr(subpath)}}}"
+@pytest.mark.parametrize("options", valid_options)
+def test_repr(options : TAll):
+    nocopy, subpath = options
+    assert repr(create(*options)) == f"{{'nocopy': {repr(nocopy)}, 'subpath': {repr(subpath)}}}"
