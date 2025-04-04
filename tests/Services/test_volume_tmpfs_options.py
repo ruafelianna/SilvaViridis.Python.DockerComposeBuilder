@@ -3,15 +3,18 @@ from __future__ import annotations
 import pytest
 
 from itertools import product
-from typing import Any
 
 from SilvaViridis.Python.Common.Unix import PermissionLevel, UnixPermissions
 
 from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeTmpfsOptions
 
-from ..fixtures import non_models
+LABELS = ["size", "mode"]
 
-size_values : list[int | None] = [100, None]
+type TSze = int | None
+type TMde = UnixPermissions | None
+type TAll = tuple[TSze, TMde]
+
+size_values : list[TSze] = [100, None]
 
 permissions = [
     (PermissionLevel.rw, PermissionLevel.none, PermissionLevel.wx),
@@ -21,55 +24,61 @@ permissions = [
     (PermissionLevel.wx, PermissionLevel.rwx, PermissionLevel.rwx),
 ]
 
-mode_values : list[UnixPermissions | None] = [UnixPermissions(user = u, group = g, other = o) for u, g, o in permissions] + [None]
+mode_values : list[TMde] = [UnixPermissions(user = u, group = g, other = o) for u, g, o in permissions] + [None]
 
-prod_size_mode = list(product(size_values, mode_values))
+s0 = size_values[0]
+u0 : UnixPermissions = mode_values[0] # type: ignore
+
+full_options = [
+    ((None, None), (None, None)),
+    ((s0, None), ("100", None)),
+    ((None, u0), (None, u0.as_octal())),
+    ((s0, u0), ("100", u0.as_octal())),
+]
+
+def create(size : TSze, mode : TMde):
+    return VolumeTmpfsOptions(size = size, mode = mode)
+
+valid_options = list(product(size_values, mode_values))
 
 ## CREATION
 
-@pytest.mark.parametrize("size,mode", prod_size_mode)
-def test_create(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size = size, mode = mode)
-    assert (options.size, options.mode) == (size, mode)
+@pytest.mark.parametrize("options", valid_options)
+def test_create(options : TAll):
+    options_obj = create(*options)
+    assert (
+        options_obj.size,
+        options_obj.mode,
+    ) == options
 
 ## API
 
-@pytest.mark.parametrize("size,mode", prod_size_mode)
-def test_full_options(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size = size, mode = mode)
-    expected : dict[str, str | None] = {
-        "size": None if size is None else str(size),
-        "mode": None if mode is None else mode.as_octal(),
-    }
-    expected = {k: v for k, v in expected.items() if v is not None}
-    assert options.get_full_options() == expected
+@pytest.mark.parametrize("options,expected", full_options)
+def test_full_options(options : TAll, expected : tuple[str | None, str | None]):
+    result = {l: e for l, e in map(lambda l, e: (l, e), LABELS, expected) if e is not None} 
+    assert create(*options).get_full_options() == result
 
 ## EQUALITY
 
-@pytest.mark.parametrize("size1,mode1", prod_size_mode)
-@pytest.mark.parametrize("size2,mode2", prod_size_mode)
-def test_equal(size1 : int | None, mode1 : UnixPermissions | None, size2 : bool | None, mode2 : UnixPermissions | None):
-    options1 = VolumeTmpfsOptions(size = size1, mode = mode1)
-    options2 = VolumeTmpfsOptions(size = size2, mode = mode2)
-    assert (options1 == options2) == (size1 == size2 and mode1 == mode2)
-
-
-@pytest.mark.parametrize("size,mode", prod_size_mode)
-@pytest.mark.parametrize("other", non_models)
-def test_not_equal(size : int | None, mode : UnixPermissions | None, other : Any):
-    options = VolumeTmpfsOptions(size = size, mode = mode)
-    assert options != other
+@pytest.mark.parametrize("options1", valid_options)
+@pytest.mark.parametrize("options2", valid_options)
+def test_equal(options1 : TAll, options2 : TAll):
+    size1, mode1 = options1
+    size2, mode2 = options2
+    assert (create(*options1) == create(*options2)) == (
+        size1 == size2
+        and mode1 == mode2
+    )
 
 ## HASH
 
-@pytest.mark.parametrize("size,mode", prod_size_mode)
-def test_hash(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size = size, mode = mode)
-    assert hash(options) == hash((size, mode))
+@pytest.mark.parametrize("options", valid_options)
+def test_hash(options : TAll):
+    assert hash(create(*options)) == hash(options)
 
 ## REPR
 
-@pytest.mark.parametrize("size,mode", prod_size_mode)
-def test_repr(size : int | None, mode : UnixPermissions | None):
-    options = VolumeTmpfsOptions(size = size, mode = mode)
-    assert repr(options) == f"{{'size': {repr(size)}, 'mode': {repr(mode)}}}"
+@pytest.mark.parametrize("options", valid_options)
+def test_repr(options : TAll):
+    size, mode = options
+    assert repr(create(*options)) == f"{{'size': {repr(size)}, 'mode': {repr(mode)}}}"
