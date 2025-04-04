@@ -7,75 +7,73 @@ from itertools import product
 from SilvaViridis.Python.DockerComposeBuilder.Common import SELinuxRelabelingOption
 from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeBindOptions
 
+from ..fixtures import (
+    check_create_full,
+    check_eq_full,
+    check_full_volume_options,
+    check_hash_full,
+    check_repr_full,
+    create_obj_from_dict,
+    ternary_options,
+)
+
+LABELS = ["propagation", "create_host_path", "selinux"]
+
 type TPrp = bool | None
 type TChp = bool | None
 type TSel = SELinuxRelabelingOption | None
 type TAll = tuple[TPrp, TChp, TSel]
 
-LABELS = ["propagation", "create_host_path", "selinux"]
+def create(args : TAll) -> VolumeBindOptions:
+    return create_obj_from_dict(VolumeBindOptions, LABELS, *args)
 
-propagation_values : list[TPrp] = [True, False, None]
+propagation_values = ternary_options
 
-create_host_path_values : list[TChp] = [True, False, None]
+create_host_path_values = ternary_options
 
-selinux_values : list[TSel] = list(SELinuxRelabelingOption) + [None]
-
-p0 = propagation_values[0]
-c1 = create_host_path_values[1]
-s0 : SELinuxRelabelingOption = selinux_values[0] # type: ignore
-
-full_options = [
-    ((p0, None, None), ("true", None, None)),
-    ((None, c1, None), (None, "false", None)),
-    ((None, None, s0), (None, None, s0.value)),
-    ((p0, c1, s0), ("true", "false", s0.value)),
-]
-
-def create(propagation : TPrp, create_host_path : TChp, selinux : TSel):
-    return VolumeBindOptions(propagation = propagation, create_host_path = create_host_path, selinux = selinux)
+selinux_values = list(SELinuxRelabelingOption) + [None]
 
 valid_options = list(product(propagation_values, create_host_path_values, selinux_values))
+
+propagation = True
+create_host_path = False
+selinux = SELinuxRelabelingOption.shared
+
+full_options = [
+    ((None, None, None), (None, None, None)),
+    ((propagation, None, None), ("true", None, None)),
+    ((None, create_host_path, None), (None, "false", None)),
+    ((None, None, selinux), (None, None, "z")),
+    ((propagation, create_host_path, selinux), ("true", "false", "z")),
+]
 
 ## CREATION
 
 @pytest.mark.parametrize("options", valid_options)
 def test_create(options : TAll):
-    options_obj = create(*options)
-    assert (
-        options_obj.propagation,
-        options_obj.create_host_path,
-        options_obj.selinux
-    ) == options
+    check_create_full(LABELS, options, create)
 
 ## API
 
 @pytest.mark.parametrize("options,expected", full_options)
-def test_full_options(options : TAll, expected : tuple[str | None, str | None, str | None]):
-    result = {l: e for l, e in map(lambda l, e: (l, e), LABELS, expected) if e is not None}
-    assert create(*options).get_full_options() == result
+def test_full_options(options : TAll, expected : tuple[str | None, ...]):
+    check_full_volume_options(options, LABELS, create, expected)
 
 ## EQUALITY
 
 @pytest.mark.parametrize("options1", valid_options)
 @pytest.mark.parametrize("options2", valid_options)
 def test_equal(options1 : TAll, options2 : TAll):
-    propagation1, create_host_path1, selinux1 = options1
-    propagation2, create_host_path2, selinux2 = options2
-    assert (create(*options1) == create(*options2)) == (
-        propagation1 == propagation2
-        and create_host_path1 == create_host_path2
-        and selinux1 == selinux2
-    )
+    check_eq_full(options1, options2, create)
 
 ## HASH
 
 @pytest.mark.parametrize("options", valid_options)
 def test_hash(options : TAll):
-    assert hash(create(*options)) == hash(options)
+    check_hash_full(options, create)
 
 ## REPR
 
 @pytest.mark.parametrize("options", valid_options)
 def test_repr(options : TAll):
-    propagation, create_host_path, selinux = options
-    assert repr(create(*options)) == f"{{'propagation': {repr(propagation)}, 'create_host_path': {repr(create_host_path)}, 'selinux': {repr(selinux)}}}"
+    check_repr_full(LABELS, options, create)

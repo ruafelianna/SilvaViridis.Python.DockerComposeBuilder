@@ -7,73 +7,72 @@ from itertools import product
 from SilvaViridis.Python.DockerComposeBuilder.Common import OS, Path
 from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeOptions
 
+from ..fixtures import (
+    check_create_full,
+    check_eq_full,
+    check_full_volume_options,
+    check_hash_full,
+    check_repr_full,
+    create_obj_from_dict,
+    ternary_options,
+)
+
 LABELS = ["nocopy", "subpath"]
 
 type TNcp = bool | None
 type TSbp = Path | None
 type TAll = tuple[TNcp, TSbp]
 
-nocopy_values : list[TNcp] = [True, False, None]
+def create(args : TAll) -> VolumeOptions:
+    return create_obj_from_dict(VolumeOptions, LABELS, *args)
 
-subpath_values : list[TSbp] = [
+nocopy_values = ternary_options
+
+subpath_values = [
     Path(path = "/some/posix/path"),
     Path(path = "C:\\some\\nt\\path", os = OS.NT),
     None,
 ]
 
-n0 = nocopy_values[0]
-s0 : Path = subpath_values[0] # type: ignore
+valid_options = list(product(nocopy_values, subpath_values))
+
+nocopy = True
+subpath = Path(path = "/some/posix/path")
 
 full_options = [
     ((None, None), (None, None)),
-    ((n0, None), ("true", None)),
-    ((None, s0), (None, s0.path)),
-    ((n0, s0), ("true", s0.path)),
+    ((nocopy, None), ("true", None)),
+    ((None, subpath), (None, "/some/posix/path")),
+    ((nocopy, subpath), ("true", "/some/posix/path")),
 ]
-
-def create(nocopy : TNcp, subpath : TSbp):
-    return VolumeOptions(nocopy = nocopy, subpath = subpath)
-
-valid_options = list(product(nocopy_values, subpath_values))
 
 ## CREATION
 
 @pytest.mark.parametrize("options", valid_options)
 def test_create(options : TAll):
-    options_obj = create(*options)
-    assert (
-        options_obj.nocopy,
-        options_obj.subpath,
-    ) == options
+    check_create_full(LABELS, options, create)
 
 ## API
 
 @pytest.mark.parametrize("options,expected", full_options)
-def test_full_options(options : TAll, expected : tuple[str | None, str | None]):
-    result = {l: e for l, e in map(lambda l, e: (l, e), LABELS, expected) if e is not None} 
-    assert create(*options).get_full_options() == result
+def test_full_options(options : TAll, expected : tuple[str | None, ...]):
+    check_full_volume_options(options, LABELS, create, expected)
 
 ## EQUALITY
 
 @pytest.mark.parametrize("options1", valid_options)
 @pytest.mark.parametrize("options2", valid_options)
 def test_equal(options1 : TAll, options2 : TAll):
-    nocopy1, subpath1 = options1
-    nocopy2, subpath2 = options2
-    assert (create(*options1) == create(*options2)) == (
-        nocopy1 == nocopy2
-        and subpath1 == subpath2
-    )
+    check_eq_full(options1, options2, create)
 
 ## HASH
 
 @pytest.mark.parametrize("options", valid_options)
 def test_hash(options : TAll):
-    assert hash(create(*options)) == hash(options)
+    check_hash_full(options, create)
 
 ## REPR
 
 @pytest.mark.parametrize("options", valid_options)
 def test_repr(options : TAll):
-    nocopy, subpath = options
-    assert repr(create(*options)) == f"{{'nocopy': {repr(nocopy)}, 'subpath': {repr(subpath)}}}"
+    check_repr_full(LABELS, options, create)

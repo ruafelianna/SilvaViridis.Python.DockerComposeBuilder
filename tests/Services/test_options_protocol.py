@@ -5,7 +5,7 @@ class SomeVolumeOptions:
     def get_full_options(
         self,
     ) -> Configuration:
-        return {} # pragma: no cover
+        return NotImplemented # pragma: no cover
 
 def test_runtime_checkable():
     assert isinstance(SomeVolumeOptions, IVolumeOptions)
