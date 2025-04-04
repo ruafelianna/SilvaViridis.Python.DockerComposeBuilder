@@ -1,308 +1,168 @@
 import pytest
 
 from ipaddress import IPv4Address, IPv6Address
+from itertools import product
 from pydantic import ValidationError
+from random import choices as random_choices
 from typing import Literal
 
-from SilvaViridis.Python.DockerComposeBuilder.Common import AppProtocol
+from SilvaViridis.Python.DockerComposeBuilder.Common import AppProtocol, Configuration
 from SilvaViridis.Python.DockerComposeBuilder.Services import Port, TPort, TPortRange
 
-ports_single = [80]
+type TCpt = TPort | TPortRange
+type THpt = TPort | TPortRange | None
+type THip = IPv4Address | IPv6Address | None
+type TPrt = Literal["tcp", "udp"] | None
+type TNme = str | None
+type TApr = AppProtocol | None
+type TMde = Literal["host", "ingress"] | None
+TAll = tuple[TCpt, THpt, THip, TPrt, TNme, TApr, TMde, bool]
 
-ports_paired = [(8000, 8010)]
+container_ports = [80, (8000, 8010), (8090, 8010), (12000, 13000)]
 
-container_ports_single = ports_single
+host_ports = [8080, (9000, 9010), (9090, 9010), (14000, 15000)]
 
-container_ports_paired = ports_paired
+host_ips = [IPv4Address("192.168.0.1"), IPv6Address("::1"), None]
 
-host_ports = [None] + ports_single + ports_paired
+protocols = ["tcp", None]
 
-host_ips = [None, IPv4Address("192.168.0.1"), IPv6Address("::1")]
+names = ["mead", None]
 
-protocols = [None, "tcp", "udp"]
+app_protocols = [AppProtocol.http, None]
 
-names = [None, "apple"]
+modes = ["host", None]
 
-app_protocols = [None, AppProtocol.http, AppProtocol.https]
+force_long_syntax_options = [False]
 
-modes = [None, "host", "ingress"]
+prod_all = list(product(container_ports, host_ports, host_ips, protocols, names, app_protocols, modes, force_long_syntax_options))
 
-incorrect_range = [(8090, 8010)]
+cp0 = container_ports[0]
+cp1 : TPortRange = container_ports[1] # type: ignore
+hp0 = host_ports[0]
+hp1 : TPortRange = host_ports[1] # type: ignore
+hi0 = host_ips[0]
+hi1 = host_ips[1]
+pr0 = protocols[0]
+nm0 = names[0]
+ap0 : AppProtocol = app_protocols[0] # type: ignore
+md0 = modes[0]
 
-long_range = [(12000, 13000)]
+full_ports = [
+    ((cp0, None, None, None, None, None, None, False), f"{cp0}"),
+    ((cp1, None, None, None, None, None, None, False), f"{cp1[0]}-{cp1[1]}"),
+    ((cp0, hp0, None, None, None, None, None, False), f"{hp0}:{cp0}"),
+    ((cp1, hp1, None, None, None, None, None, False), f"{hp1[0]}-{hp1[1]}:{cp1[0]}-{cp1[1]}"),
+    ((cp0, hp1, None, None, None, None, None, False), f"{hp1[0]}-{hp1[1]}:{cp0}"),
+    ((cp1, None, hi0, None, None, None, None, False), f"{hi0}:{cp1[0]}-{cp1[1]}"),
+    ((cp1, hp1, hi0, None, None, None, None, False), f"{hi0}:{hp1[0]}-{hp1[1]}:{cp1[0]}-{cp1[1]}"),
+    ((cp1, None, hi1, None, None, None, None, False), f"{hi1}:{cp1[0]}-{cp1[1]}"),
+    ((cp1, None, None, pr0, None, None, None, False), f"{cp1[0]}-{cp1[1]}/{pr0}"),
+    ((cp0, hp0, hi0, pr0, nm0, ap0, md0, False), {
+        "name": nm0,
+        "target": f"{cp0}",
+        "host_ip": f"{hi0}",
+        "published": f"{hp0}",
+        "protocol": pr0,
+        "app_protocol": ap0.name,
+        "mode": md0,
+    }),
+]
+
+def create(container_port : TCpt, host_port : THpt, host_ip : THip, protocol : TPrt, name : TNme, app_protocol : TApr, mode : TMde, force_long_syntax : bool):
+    return Port(
+        container_port = container_port,
+        host_port = host_port,
+        host_ip = host_ip,
+        protocol = protocol,
+        name = name,
+        app_protocol = app_protocol,
+        mode = mode,
+        force_long_syntax = force_long_syntax,
+    )
+
+def valid(container_port : TCpt, host_port : THpt, host_ip : THip, protocol : TPrt, name : TNme, app_protocol : TApr, mode : TMde, force_long_syntax : bool):
+    if (
+        isinstance(container_port, tuple)
+        and container_port[0] >= container_port[1]
+    ):
+        return False
+
+    if (
+        isinstance(host_port, tuple)
+        and host_port[0] >= host_port[1]
+    ):
+        return False
+
+    if (
+        isinstance(container_port, tuple)
+        and isinstance(host_port, tuple)
+    ):
+        s1, e1 = container_port
+        s2, e2 = host_port
+
+        if e1 - s1 != e2 - s2:
+            return False
+
+    if (
+        isinstance(container_port, tuple)
+        and isinstance(host_port, int)
+    ):
+        return False
+
+    return True
+
+valid_ports = [t for t in prod_all if valid(*t)] # type: ignore
+
+invalid_ports = [t for t in prod_all if not valid(*t)] # type: ignore
+
+double_prod = random_choices(list(product(valid_ports, repeat = 2)), k = 100)
 
 ## CREATION
 
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-def test_create_short(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-    )
+@pytest.mark.parametrize("port", valid_ports)
+def test_create(port : TAll):
+    port_obj = create(*port)
     assert (
-        port.container_port,
-        port.host_port,
-        port.host_ip,
-        port.protocol,
-        port.name,
-        port.app_protocol,
-        port.mode,
-        port.force_long_syntax,
-    ) == (
-        container_port,
-        host_port,
-        host_ip,
-        protocol,
-        None,
-        None,
-        None,
-        False,
-    )
-
-
-@pytest.mark.parametrize("container_port", container_ports_paired)
-def test_create_forced(container_port : TPort | TPortRange):
-    port = Port(
-        container_port = container_port,
-        force_long_syntax = True,
-    )
-    assert (
-        port.container_port,
-        port.host_port,
-        port.host_ip,
-        port.protocol,
-        port.name,
-        port.app_protocol,
-        port.mode,
-        port.force_long_syntax,
-    ) == (
-        container_port,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        True,
-    )
-
-
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-@pytest.mark.parametrize("name", names)
-@pytest.mark.parametrize("app_protocol", app_protocols)
-@pytest.mark.parametrize("mode", modes)
-def test_create_full(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-    name : str | None, app_protocol : AppProtocol | None, mode : Literal["host", "ingress"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-        name = name,
-        app_protocol = app_protocol,
-        mode = mode,
-    )
-    assert (
-        port.container_port,
-        port.host_port,
-        port.host_ip,
-        port.protocol,
-        port.name,
-        port.app_protocol,
-        port.mode,
-        port.force_long_syntax,
-    ) == (
-        container_port,
-        host_port,
-        host_ip,
-        protocol,
-        name,
-        app_protocol,
-        mode,
-        False,
-    )
+        port_obj.container_port,
+        port_obj.host_port,
+        port_obj.host_ip,
+        port_obj.protocol,
+        port_obj.name,
+        port_obj.app_protocol,
+        port_obj.mode,
+        port_obj.force_long_syntax,
+    ) == port
 
 
 @pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("container_port", incorrect_range)
-def test_create_fail_container_range(container_port : TPort | TPortRange):
-    Port(
-        container_port = container_port,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("container_port", container_ports_paired)
-@pytest.mark.parametrize("host_port", incorrect_range)
-def test_create_fail_host_range(container_port : TPort | TPortRange, host_port : TPort | TPortRange | None):
-    Port(
-        container_port = container_port,
-        host_port = host_port,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("container_port", long_range)
-@pytest.mark.parametrize("host_port", ports_paired)
-def test_create_fail_long_container(container_port : TPort | TPortRange, host_port : TPort | TPortRange | None):
-    Port(
-        container_port = container_port,
-        host_port = host_port,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("container_port", container_ports_paired)
-@pytest.mark.parametrize("host_port", long_range)
-def test_create_fail_long_host(container_port : TPort | TPortRange, host_port : TPort | TPortRange | None):
-    Port(
-        container_port = container_port,
-        host_port = host_port,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("container_port", container_ports_paired)
-@pytest.mark.parametrize("host_port", ports_single)
-def test_create_fail_mapping(container_port : TPort | TPortRange, host_port : TPort | TPortRange | None):
-    Port(
-        container_port = container_port,
-        host_port = host_port,
-    )
+@pytest.mark.parametrize("port", invalid_ports)
+def test_create_fail(port : TAll):
+    create(*port)
 
 ## API
 
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-def test_full_port_short(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-    )
-    hip = "" if host_ip is None else f"{host_ip}:"
-    hport = "" if host_port is None else str(host_port) if isinstance(host_port, int) else f"{host_port[0]}-{host_port[1]}"
-    hport = "" if hport == "" else f"{hport}:"
-    cport = str(container_port) if isinstance(container_port, int) else f"{container_port[0]}-{container_port[1]}"
-    prot = "" if protocol is None else f"/{protocol}"
-    assert port.get_full_port() == f"{hip}{hport}{cport}{prot}"
-
-
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-@pytest.mark.parametrize("name", names)
-@pytest.mark.parametrize("app_protocol", app_protocols)
-@pytest.mark.parametrize("mode", modes)
-def test_full_port_long(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-    name : str | None, app_protocol : AppProtocol | None, mode : Literal["host", "ingress"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-        name = name,
-        app_protocol = app_protocol,
-        mode = mode,
-        force_long_syntax = True,
-    )
-    expected = {
-        "target": str(container_port) if isinstance(container_port, int) else f"{container_port[0]}-{container_port[1]}",
-        "published" : None if host_port is None else str(host_port) if isinstance(host_port, int) else f"{host_port[0]}-{host_port[1]}",
-        "host_ip" : None if host_ip is None else str(host_ip),
-        "name" : name,
-        "protocol" : protocol,
-        "app_protocol" : None if app_protocol is None else app_protocol.name,
-        "mode" : mode,
-    }
-    assert port.get_full_port() == {k: v for k, v in expected.items() if v is not None}
+@pytest.mark.parametrize("port,expected", full_ports)
+def test_full_port(port : TAll, expected : Configuration):
+    assert create(*port).get_full_port() == expected
 
 ## EQUALITY
 
-@pytest.mark.parametrize("container_port1", container_ports_single)
-@pytest.mark.parametrize("host_port1", host_ports)
-@pytest.mark.parametrize("host_ip1", host_ips)
-@pytest.mark.parametrize("protocol1", protocols)
-@pytest.mark.parametrize("container_port2", container_ports_single)
-@pytest.mark.parametrize("host_port2", host_ports)
-@pytest.mark.parametrize("host_ip2", host_ips)
-@pytest.mark.parametrize("protocol2", protocols)
-def test_equal(
-    container_port1 : TPort | TPortRange, host_port1 : TPort | TPortRange | None,
-    host_ip1 : IPv4Address | IPv6Address | None, protocol1 : Literal["tcp", "udp"] | None,
-    container_port2 : TPort | TPortRange, host_port2 : TPort | TPortRange | None,
-    host_ip2 : IPv4Address | IPv6Address | None, protocol2 : Literal["tcp", "udp"] | None,
-):
-    port1 = Port(
-        container_port = container_port1,
-        host_port = host_port1,
-        host_ip = host_ip1,
-        protocol = protocol1,
-    )
-    port2 = Port(
-        container_port = container_port2,
-        host_port = host_port2,
-        host_ip = host_ip2,
-        protocol = protocol2,
-    )
-    assert (port1 == port2) == (container_port1 == container_port2)
+@pytest.mark.parametrize("port1,port2", double_prod)
+def test_equal(port1 : TAll, port2 : TAll):
+    container_port1, _, _, _, _, _, _, _ = port1
+    container_port2, _, _, _, _, _, _, _ = port2
+    assert (create(*port1) == create(*port2)) == (container_port1 == container_port2)
 
 ## HASH
 
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-def test_hash(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-    )
-    assert hash(port) == hash(container_port)
+@pytest.mark.parametrize("port", valid_ports)
+def test_hash(port : TAll):
+    container_port, _, _, _, _, _, _, _ = port
+    assert hash(create(*port)) == hash(container_port)
 
 ## REPR
 
-@pytest.mark.parametrize("container_port", container_ports_single)
-@pytest.mark.parametrize("host_port", host_ports)
-@pytest.mark.parametrize("host_ip", host_ips)
-@pytest.mark.parametrize("protocol", protocols)
-def test_repr(
-    container_port : TPort | TPortRange, host_port : TPort | TPortRange | None,
-    host_ip : IPv4Address | IPv6Address | None, protocol : Literal["tcp", "udp"] | None,
-):
-    port = Port(
-        container_port = container_port,
-        host_port = host_port,
-        host_ip = host_ip,
-        protocol = protocol,
-    )
-    assert repr(port) == f"{{'container_port': {repr(container_port)}, 'host_port': {repr(host_port)}, 'host_ip': {repr(host_ip)}, 'protocol': {repr(protocol)}, 'app_protocol': None, 'name': None, 'mode': None, 'force_long_syntax': False}}"
+@pytest.mark.parametrize("port", valid_ports)
+def test_repr(port : TAll):
+    container_port, host_port, host_ip, protocol, name, app_protocol, mode, force_long_syntax = port
+    assert repr(create(*port)) == f"{{'container_port': {repr(container_port)}, 'host_port': {repr(host_port)}, 'host_ip': {repr(host_ip)}, 'protocol': {repr(protocol)}, 'app_protocol': {repr(app_protocol)}, 'name': {repr(name)}, 'mode': {repr(mode)}, 'force_long_syntax': {repr(force_long_syntax)}}}"
