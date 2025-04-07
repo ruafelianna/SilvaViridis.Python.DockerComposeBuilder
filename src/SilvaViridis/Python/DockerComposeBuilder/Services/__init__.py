@@ -1,6 +1,7 @@
 from .EnvVar import EnvVar
 from .IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
 from .Image import Image
+from .Network import Network
 from .Port import Port, TPort, TPortRange
 from .Volume import Volume
 from .VolumeAccessMode import VolumeAccessMode
@@ -15,6 +16,7 @@ __all__ = [
     "IVolumeOptionsTypeHint",
     "IVolumeOptionsValidator",
     "Image",
+    "Network",
     "Port",
     "TPort",
     "TPortRange",
