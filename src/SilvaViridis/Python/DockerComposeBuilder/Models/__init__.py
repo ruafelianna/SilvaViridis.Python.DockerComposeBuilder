@@ -1,14 +1,14 @@
-from .EnvVar import EnvVar
-from .Image import Image
-from .IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
-from .Network import Network
-from .Port import Port, TPort, TPortRange
-from .Volume import Volume
-from .VolumeAccessMode import VolumeAccessMode
-from .VolumeBindOptions import VolumeBindOptions
-from .VolumeOptions import VolumeOptions
-from .VolumeTmpfsOptions import VolumeTmpfsOptions
-from .VolumeType import VolumeType
+from ._EnvVar import EnvVar
+from ._Image import Image
+from ._IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
+from ._Network import Network
+from ._Port import Port, TPort, TPortRange
+from ._Volume import Volume
+from ._VolumeAccessMode import VolumeAccessMode
+from ._VolumeBindOptions import VolumeBindOptions
+from ._VolumeOptions import VolumeOptions
+from ._VolumeTmpfsOptions import VolumeTmpfsOptions
+from ._VolumeType import VolumeType
 
 __all__ = [
     "EnvVar",
