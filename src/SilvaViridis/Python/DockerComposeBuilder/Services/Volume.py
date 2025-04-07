@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
-from typing import Any, Literal, get_args
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validate_call
+from typing import Any
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from .IVolumeOptions import IVolumeOptionsTypeHint
+from .IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint
 from .VolumeAccessMode import VolumeAccessMode
 from .VolumeBindOptions import VolumeBindOptions
 from .VolumeOptions import VolumeOptions
@@ -14,24 +14,20 @@ from .VolumeType import VolumeType
 from ..Common import Configuration, Path
 from ..Config import PathsConfig
 
-TEmptySource = Literal[""]
-EMPTY_SOURCE = get_args(TEmptySource)[0]
-
 @validate_call
 def _check_options(
     options : IVolumeOptionsTypeHint | None
 ) -> Configuration | None:
-    if options is None:
-        return None
-    else:
+    if isinstance(options,IVolumeOptions):
         category = options.get_full_options()
         return category if len(category) > 0 else None
+    return None
 
 class Volume(BaseModel):
     target : Path
     volume_type : VolumeType
     access_mode : VolumeAccessMode = Field(default = VolumeAccessMode.read_write)
-    source : Path | NonEmptyString | TEmptySource = Field(default = EMPTY_SOURCE)
+    source : Path | NonEmptyString | None = Field(default = None)
     consistency : NonEmptyString | None = Field(default = None)
     bind_options : VolumeBindOptions | None = Field(default = None)
     volume_options : VolumeOptions | None = Field(default = None)
@@ -42,27 +38,19 @@ class Volume(BaseModel):
         frozen = True,
     )
 
-    @field_validator("source", mode = "before")
-    @classmethod
-    def validate_source(
-        cls,
-        source : Path | NonEmptyString | None = None,
-    ) -> Path | NonEmptyString | TEmptySource:
-        return EMPTY_SOURCE if source is None else source
-
     @model_validator(mode = "after")
     def validate_volume_type_source(
         self,
     ) -> Volume:
         if (
             self.volume_type == VolumeType.tmpfs
-            and self.source != EMPTY_SOURCE
+            and self.source is not None
         ):
             raise ValueError("tmpfs mode doesn't support setting the source")
 
         if (
             self.volume_type != VolumeType.tmpfs
-            and self.source == EMPTY_SOURCE
+            and self.source is None
         ):
             raise ValueError("The source should be set")
 
@@ -73,7 +61,7 @@ class Volume(BaseModel):
             raise ValueError("Volume mode supports only str source")
 
         if (
-            self.volume_type not in [VolumeType.volume, VolumeType.tmpfs]
+            self.volume_type != VolumeType.volume
             and isinstance(self.source, str)
         ):
             raise ValueError("Only volume mode supports str source")
@@ -126,8 +114,10 @@ class Volume(BaseModel):
     ) -> Configuration:
         if isinstance(self.source, Path):
             source = self.get_full_source(self.source, container_name)
-        else:
+        elif isinstance(self.source, str):
             source = self.source
+        else:
+            source = ""
 
         if (
             self.force_long_syntax
