@@ -4,7 +4,7 @@ from itertools import product
 from pydantic import ValidationError
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration
-from SilvaViridis.Python.DockerComposeBuilder.Services import EnvVar
+from SilvaViridis.Python.DockerComposeBuilder.Models import EnvVar
 
 from ..fixtures import (
     check_create_full,

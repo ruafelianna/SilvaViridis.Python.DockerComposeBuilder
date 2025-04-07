@@ -4,7 +4,7 @@ from itertools import product
 from pydantic import ValidationError
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration, HashType
-from SilvaViridis.Python.DockerComposeBuilder.Services import Image
+from SilvaViridis.Python.DockerComposeBuilder.Models import Image
 
 from ..fixtures import (
     check_create_full,

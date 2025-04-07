@@ -7,7 +7,7 @@ from random import choices as random_choices
 from typing import Literal
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import AppProtocol, Configuration
-from SilvaViridis.Python.DockerComposeBuilder.Services import Port, TPort, TPortRange
+from SilvaViridis.Python.DockerComposeBuilder.Models import Port, TPort, TPortRange
 
 from ..fixtures import (
     check_create_full,

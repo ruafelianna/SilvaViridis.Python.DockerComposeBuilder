@@ -5,7 +5,7 @@ import pytest
 from itertools import product
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import OS, Path
-from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeOptions
+from SilvaViridis.Python.DockerComposeBuilder.Models import VolumeOptions
 
 from ..fixtures import (
     check_create_full,

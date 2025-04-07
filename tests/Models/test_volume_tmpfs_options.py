@@ -6,7 +6,7 @@ from itertools import product
 
 from SilvaViridis.Python.Common.Unix import PermissionLevel, UnixPermissions
 
-from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeTmpfsOptions
+from SilvaViridis.Python.DockerComposeBuilder.Models import VolumeTmpfsOptions
 
 from ..fixtures import (
     check_create_full,

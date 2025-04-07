@@ -5,7 +5,7 @@ import pytest
 from itertools import product
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration
-from SilvaViridis.Python.DockerComposeBuilder.Services import Network
+from SilvaViridis.Python.DockerComposeBuilder.Models import Network
 
 from ..fixtures import (
     check_create_full,

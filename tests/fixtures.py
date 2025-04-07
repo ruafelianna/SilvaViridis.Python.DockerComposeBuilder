@@ -3,8 +3,7 @@ from os import getenv
 from typing import Any
 
 from SilvaViridis.Python.Common.Unix import PermissionLevel, UnixPermissions
-
-from SilvaViridis.Python.DockerComposeBuilder.Services import IVolumeOptions
+from SilvaViridis.Python.DockerComposeBuilder.Models import IVolumeOptions
 
 DCG_BASE_DATA_FOLDER = getenv("DCG_BASE_DATA_FOLDER")
 

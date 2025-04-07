@@ -8,7 +8,7 @@ from SilvaViridis.Python.Common.Text import NonEmptyString
 from SilvaViridis.Python.Common.Unix import PermissionLevel
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration, OS, Path, SELinuxRelabelingOption
-from SilvaViridis.Python.DockerComposeBuilder.Services import Volume, VolumeAccessMode, VolumeBindOptions, VolumeOptions, VolumeTmpfsOptions, VolumeType
+from SilvaViridis.Python.DockerComposeBuilder.Models import Volume, VolumeAccessMode, VolumeBindOptions, VolumeOptions, VolumeTmpfsOptions, VolumeType
 
 from ..fixtures import (
     DCG_BASE_DATA_FOLDER,

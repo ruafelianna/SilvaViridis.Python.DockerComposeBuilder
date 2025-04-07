@@ -5,7 +5,7 @@ import pytest
 from itertools import product
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import SELinuxRelabelingOption
-from SilvaViridis.Python.DockerComposeBuilder.Services import VolumeBindOptions
+from SilvaViridis.Python.DockerComposeBuilder.Models import VolumeBindOptions
 
 from ..fixtures import (
     check_create_full,

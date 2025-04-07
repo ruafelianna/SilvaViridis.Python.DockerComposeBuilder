@@ -1,5 +1,5 @@
 from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration
-from SilvaViridis.Python.DockerComposeBuilder.Services import IVolumeOptions
+from SilvaViridis.Python.DockerComposeBuilder.Models import IVolumeOptions
 
 class SomeVolumeOptions:
     def get_full_options(
