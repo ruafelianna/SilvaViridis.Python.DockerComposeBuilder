@@ -1,523 +1,249 @@
 import pytest
 
+from itertools import product
 from pydantic import ValidationError
+from random import choices as random_choices
 
-from SilvaViridis.Python.Common.Unix import PermissionLevel, UnixPermissions
+from SilvaViridis.Python.Common.Text import NonEmptyString
+from SilvaViridis.Python.Common.Unix import PermissionLevel
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import OS, Path, SELinuxRelabelingOption
 from SilvaViridis.Python.DockerComposeBuilder.Services import Volume, VolumeAccessMode, VolumeBindOptions, VolumeOptions, VolumeTmpfsOptions, VolumeType
 
-from ..fixtures import DCG_BASE_DATA_FOLDER, containers, empty
+from ..fixtures import (
+    DCG_BASE_DATA_FOLDER,
+    check_create_full,
+    check_repr_full,
+    create_obj_from_dict,
+    create_unix_permission,
+)
 
-targets = ["some/posix/path"]
+LABELS = ["target", "volume_type", "access_mode", "source", "consistency", "bind_options", "volume_options", "tmpfs_options", "force_long_syntax"]
 
-map_targets = [Path(path = t, os = OS.POSIX) for t in targets]
+type TTrg = Path
+type TVmt = VolumeType
+type TAcm = VolumeAccessMode
+type TSrc = Path | NonEmptyString | None
+type TCst = NonEmptyString | None
+type TBno = VolumeBindOptions | None
+type TVmo = VolumeOptions | None
+type TTmp = VolumeTmpfsOptions | None
+type TFls = bool
+type TAll = tuple[TTrg, TVmt, TAcm, TSrc, TCst, TBno, TVmo, TTmp, TFls]
+type TAllC = tuple[TTrg, TVmt, TAcm, TSrc, TCst, TBno, TVmo, TTmp, TFls, str]
 
-path_sources_nt = ["some\\nt\\path"]
+def create(args : TAll) -> Volume:
+    return create_obj_from_dict(Volume, LABELS, *args)
 
-map_sources_nt = [Path(path = s, os = OS.NT) for s in path_sources_nt]
+def valid(args : TAll) -> bool:
+    _, volume_type, _, source, _, bind_options, _, tmpfs_options, _ = args
 
-path_sources_posix = ["another/posix/path"]
+    if volume_type == VolumeType.tmpfs and source is not None:
+        return False
 
-map_sources_posix = [Path(path = s, os = OS.POSIX) for s in path_sources_posix]
+    if (
+        volume_type != VolumeType.tmpfs
+        and (
+            source is None
+            or (
+                tmpfs_options is not None
+                and (
+                    tmpfs_options.size is not None
+                    or tmpfs_options.mode is not None
+                )
+            )
+        )
+    ):
+        return False
 
-name_sources = ["hello"]
+    if volume_type == VolumeType.volume and not isinstance(source, str):
+        return False
 
-all_sources = map_sources_nt + map_sources_posix + name_sources
+    if volume_type != VolumeType.volume and volume_type != VolumeType.tmpfs and isinstance(source, str):
+        return False
 
-sizes = [12345]
+    if (
+        volume_type != VolumeType.bind
+        and bind_options is not None
+        and (
+            bind_options.propagation is not None
+            or bind_options.create_host_path is not None
+            or bind_options.selinux is not None
+        )
+    ):
+        return False
 
-consistencies = ["whatever"]
+    return True
 
-subpaths = ["sunny"]
-
-permissions = [
-    (PermissionLevel.rw, PermissionLevel.none, PermissionLevel.wx),
-    (PermissionLevel.x, PermissionLevel.r, PermissionLevel.rx),
-    (PermissionLevel.r, PermissionLevel.rwx, PermissionLevel.none),
-    (PermissionLevel.none, PermissionLevel.w, PermissionLevel.w),
-    (PermissionLevel.wx, PermissionLevel.rwx, PermissionLevel.rwx),
+target_values = [
+    Path(path = "some/posix/path", os = OS.POSIX),
 ]
 
-unix_permissions = [UnixPermissions(user = u, group = g, other = o) for u, g, o in permissions]
+volume_type_values = list(VolumeType)
+
+access_mode_values = list(VolumeAccessMode)
+
+source_values = [
+    Path(path = "some\\nt\\path", os = OS.NT),
+    "hello",
+    None,
+]
+
+consistency_values = ["whatever", None]
+
+bind_options_values = [
+    VolumeBindOptions(),
+    VolumeBindOptions(propagation = True),
+    None,
+]
+
+volume_options_values = [
+    VolumeOptions(),
+    VolumeOptions(nocopy = False),
+    None,
+]
+
+tmpfs_options_values = [
+    VolumeTmpfsOptions(),
+    VolumeTmpfsOptions(size = 12345),
+    None,
+]
+
+force_long_syntax_values = [False]
+
+prod_all = list(product(
+    target_values,
+    volume_type_values,
+    access_mode_values,
+    source_values,
+    consistency_values,
+    bind_options_values,
+    volume_options_values,
+    tmpfs_options_values,
+    force_long_syntax_values,
+))
+
+valid_volumes = [t for t in prod_all if valid(t)]
+
+invalid_volumes = [t for t in prod_all if not valid(t)]
+
+double_prod = random_choices(list(product(valid_volumes, repeat = 2)), k = 100)
+
+target = Path(path = "/some/posix/path", os = OS.POSIX)
+volume_type_1 = VolumeType.bind
+volume_type_2 = VolumeType.volume
+volume_type_3 = VolumeType.tmpfs
+access_mode_1 = VolumeAccessMode.read_write
+access_mode_2 = VolumeAccessMode.read_only
+source_1 = Path(path = "data", os = OS.NT)
+source_2 = "volume_name"
+container = "apple"
+bind_options_1 = VolumeBindOptions(selinux = SELinuxRelabelingOption.shared)
+bind_options_2 = VolumeBindOptions(
+    selinux = SELinuxRelabelingOption.private,
+    create_host_path = False,
+    propagation = True,
+)
+tmpfs_options_1 = VolumeTmpfsOptions(mode = create_unix_permission(PermissionLevel.rw, PermissionLevel.r, PermissionLevel.none))
+tmpfs_options_2 = VolumeTmpfsOptions(size = None)
+consistency = "whatever"
+volume_options = VolumeOptions(nocopy = True, subpath = Path(path = "orange"))
+
+full_volumes = [
+    (
+        (target, volume_type_1, access_mode_1, source_1, None, bind_options_1, None, None, False, container),
+        f"{DCG_BASE_DATA_FOLDER}\\apple\\data:/some/posix/path:z"
+    ),
+    (
+        (target, volume_type_1, access_mode_1, source_1, None, None, None, None, False, container),
+        f"{DCG_BASE_DATA_FOLDER}\\apple\\data:/some/posix/path"
+    ),
+    (
+        (target, volume_type_1, access_mode_1, source_1, None, bind_options_1, None, None, True, container),
+        {
+            "target": "/some/posix/path",
+            "type": "bind",
+            "source": f"{DCG_BASE_DATA_FOLDER}\\apple\\data",
+            "bind": {
+                "selinux": "z",
+            },
+        },
+    ),
+    (
+        (target, volume_type_2, access_mode_2, source_2, None, None, None, None, False, container),
+        f"volume_name:/some/posix/path:ro"
+    ),
+    (
+        (target, volume_type_1, access_mode_2, source_1, None, bind_options_1, None, None, False, container),
+        f"{DCG_BASE_DATA_FOLDER}\\apple\\data:/some/posix/path:ro,z"
+    ),
+    (
+        (target, volume_type_3, access_mode_1, None, None, None, None, tmpfs_options_1, False, container),
+        {
+            "target" : "/some/posix/path",
+            "type" : "tmpfs",
+            "tmpfs": {
+                "mode": "640",
+            },
+        },
+    ),
+    (
+        (target, volume_type_1, access_mode_2, source_1, consistency, bind_options_2, volume_options, tmpfs_options_2, False, container),
+        {
+            "target": "/some/posix/path",
+            "type": "bind",
+            "read_only": "true",
+            "consistency": "whatever",
+            "source": f"{DCG_BASE_DATA_FOLDER}\\apple\\data",
+            "bind": {
+                "propagation": "true",
+                "create_host_path": "false",
+                "selinux": "Z",
+            },
+            "volume": {
+                "nocopy": "true",
+                "subpath": "orange",
+            },
+        },
+    ),
+]
 
 ## CREATION
 
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-def test_create_short(target : Path, source : Path, access_mode : VolumeAccessMode):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        bind_options = VolumeBindOptions(
-            selinux = SELinuxRelabelingOption.shared,
-        ),
-    )
-    assert (
-        volume.target,
-        volume.volume_type,
-        volume.access_mode,
-        volume.source,
-        volume.consistency,
-        volume.bind_options,
-        volume.volume_options,
-        volume.tmpfs_options,
-        volume.force_long_syntax,
-    ) == (
-        target,
-        VolumeType.bind,
-        access_mode,
-        source,
-        None,
-        VolumeBindOptions(
-            selinux = SELinuxRelabelingOption.shared,
-        ),
-        None,
-        None,
-        False,
-    )
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-def test_create_forced(target : Path, source : Path, access_mode : VolumeAccessMode):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        bind_options = VolumeBindOptions(
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        force_long_syntax = True,
-    )
-    assert (
-        volume.target,
-        volume.volume_type,
-        volume.access_mode,
-        volume.source,
-        volume.consistency,
-        volume.bind_options,
-        volume.volume_options,
-        volume.tmpfs_options,
-        volume.force_long_syntax,
-    ) == (
-        target,
-        VolumeType.bind,
-        access_mode,
-        source,
-        None,
-        VolumeBindOptions(
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        None,
-        None,
-        True,
-    )
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("consistency", consistencies)
-@pytest.mark.parametrize("subpath", subpaths)
-def test_create_full(target : Path, source : Path, access_mode : VolumeAccessMode, consistency : str, subpath : str):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        consistency = consistency,
-        bind_options = VolumeBindOptions(
-            propagation = False,
-            create_host_path = True,
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        volume_options = VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-    )
-    assert (
-        volume.target,
-        volume.volume_type,
-        volume.access_mode,
-        volume.source,
-        volume.consistency,
-        volume.bind_options,
-        volume.volume_options,
-        volume.tmpfs_options,
-        volume.force_long_syntax,
-    ) == (
-        target,
-        VolumeType.bind,
-        access_mode,
-        source,
-        consistency,
-        VolumeBindOptions(
-            propagation = False,
-            create_host_path = True,
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-        None,
-        False,
-    )
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("permission", unix_permissions)
-@pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("consistency", consistencies)
-@pytest.mark.parametrize("subpath", subpaths)
-def test_create_tmpfs(
-    target : Path, source : Path, access_mode : VolumeAccessMode,
-    permission : UnixPermissions, size : int, consistency : str, subpath : str,
-):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.tmpfs,
-        access_mode = access_mode,
-        consistency = consistency,
-        tmpfs_options = VolumeTmpfsOptions(
-            size = size,
-            mode = permission,
-        ),
-        volume_options = VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-        force_long_syntax = True,
-    )
-    assert (
-        volume.target,
-        volume.volume_type,
-        volume.access_mode,
-        volume.source,
-        volume.consistency,
-        volume.bind_options,
-        volume.volume_options,
-        volume.tmpfs_options,
-        volume.force_long_syntax,
-    ) == (
-        target,
-        VolumeType.tmpfs,
-        access_mode,
-        "",
-        consistency,
-        None,
-        VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-        VolumeTmpfsOptions(
-            size = size,
-            mode = permission,
-        ),
-        True,
-    )
+@pytest.mark.parametrize("volume", valid_volumes)
+def test_create(volume : TAll):
+    check_create_full(LABELS, volume, create)
 
 
 @pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-def test_create_fail_tmpfs_and_source_set(target : Path, source : Path):
-    Volume(
-        target = target,
-        volume_type = VolumeType.tmpfs,
-        source = source,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-def test_create_fail_volume_and_source_not_str(target : Path):
-    Volume(
-        target = target,
-        volume_type = VolumeType.volume,
-        source = Path(path = "some/path"),
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-def test_create_fail_no_voulme_and_source_str(target : Path):
-    Volume(
-        target = target,
-        volume_type = VolumeType.npipe,
-        source = "volume_name",
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-def test_create_fail_no_tmpfs_and_source(target : Path):
-    Volume(
-        target = target,
-        volume_type = VolumeType.npipe,
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-def test_create_fail_bind_options_no_bind(target : Path, source : Path):
-    Volume(
-        target = target,
-        volume_type = VolumeType.cluster,
-        source = source,
-        bind_options = VolumeBindOptions(
-            propagation = True,
-        ),
-    )
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("size", sizes)
-def test_create_fail_tmpfs_options_no_tmpfs(target : Path, source : Path, size : int):
-    Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        source = source,
-        tmpfs_options = VolumeTmpfsOptions(
-            size = size,
-        ),
-    )
+@pytest.mark.parametrize("volume", invalid_volumes)
+def test_create_fail(volume : TAll):
+    create(volume)
 
 ## API
 
-@pytest.mark.parametrize("source", map_sources_nt)
-@pytest.mark.parametrize("container_name", containers)
-def test_full_source_nt(source : Path, container_name : str):
-    assert Volume.get_full_source(source, container_name) == f"{DCG_BASE_DATA_FOLDER}\\{container_name}\\{source}"
-
-
-@pytest.mark.parametrize("source", map_sources_posix)
-@pytest.mark.parametrize("container_name", containers)
-def test_full_source_posix(source : Path, container_name : str):
-    assert Volume.get_full_source(source, container_name) == f"{DCG_BASE_DATA_FOLDER}/{container_name}/{source}"
-
-
-@pytest.mark.xfail(raises = ValidationError)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("container_name", empty)
-def test_full_source_fail(source : Path, container_name : str):
-    Volume.get_full_source(source, container_name)
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("container_name", containers)
-@pytest.mark.parametrize("selinux", SELinuxRelabelingOption)
-def test_full_volume_short(target : Path, source : Path, access_mode : VolumeAccessMode, container_name : str, selinux : SELinuxRelabelingOption):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        bind_options = VolumeBindOptions(
-            selinux = selinux,
-        ),
-    )
-    access = "ro," if access_mode == VolumeAccessMode.read_only else ""
-    assert volume.get_full_volume(container_name) == f"{DCG_BASE_DATA_FOLDER}/{container_name}/{volume.source}:{volume.target}:{access}{selinux.value}"
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("container_name", containers)
-def test_full_volume_short_no_selinux(target : Path, source : Path, access_mode : VolumeAccessMode, container_name : str):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-    )
-    access = ":ro" if access_mode == VolumeAccessMode.read_only else ""
-    assert volume.get_full_volume(container_name) == f"{DCG_BASE_DATA_FOLDER}/{container_name}/{volume.source}:{volume.target}{access}"
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("container_name", containers)
-def test_full_volume_forced(target : Path, source : Path, access_mode : VolumeAccessMode, container_name : str):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        bind_options = VolumeBindOptions(
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        force_long_syntax = True,
-    )
-    exprected = {
-        "target": target.path,
-        "type": VolumeType.bind.name,
-        "source": f"{DCG_BASE_DATA_FOLDER}/{container_name}/{volume.source}",
-        "bind": {
-            "selinux": SELinuxRelabelingOption.private.value,
-        },
-    }
-    if access_mode == VolumeAccessMode.read_only:
-        exprected["read_only"] = "true"
-    assert volume.get_full_volume(container_name) == exprected
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("container_name", containers)
-@pytest.mark.parametrize("consistency", consistencies)
-@pytest.mark.parametrize("subpath", subpaths)
-def test_full_volume_full(
-    target : Path, source : Path, access_mode : VolumeAccessMode,
-    container_name : str, consistency : str, subpath : str,
-):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-        consistency = consistency,
-        bind_options = VolumeBindOptions(
-            propagation = False,
-            create_host_path = True,
-            selinux = SELinuxRelabelingOption.private,
-        ),
-        volume_options = VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-    )
-    exprected = {
-        "target": target.path,
-        "type": VolumeType.bind.name,
-        "source": f"{DCG_BASE_DATA_FOLDER}/{container_name}/{volume.source}",
-        "consistency": consistency,
-        "bind": {
-            "propagation": "false",
-            "create_host_path": "true",
-            "selinux": SELinuxRelabelingOption.private.value,
-        },
-        "volume": {
-            "nocopy": "true",
-            "subpath": subpath,
-        },
-    }
-    if access_mode == VolumeAccessMode.read_only:
-        exprected["read_only"] = "true"
-    assert volume.get_full_volume(container_name) == exprected
-
-
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-@pytest.mark.parametrize("permission", unix_permissions)
-@pytest.mark.parametrize("container_name", containers)
-@pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("consistency", consistencies)
-@pytest.mark.parametrize("subpath", subpaths)
-def test_full_volume_tmpfs(
-    target : Path, source : Path, access_mode : VolumeAccessMode, permission : UnixPermissions,
-    container_name : str, size : int, consistency : str, subpath : str,
-):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.tmpfs,
-        access_mode = access_mode,
-        consistency = consistency,
-        tmpfs_options = VolumeTmpfsOptions(
-            size = size,
-            mode = permission,
-        ),
-        volume_options = VolumeOptions(
-            nocopy = True,
-            subpath = Path(path = subpath, os = source.os),
-        ),
-        force_long_syntax = True,
-    )
-    exprected = {
-        "target": target.path,
-        "type": VolumeType.tmpfs.name,
-        "consistency": consistency,
-        "tmpfs": {
-            "size": str(size),
-            "mode": permission.as_octal(),
-        },
-        "volume": {
-            "nocopy": "true",
-            "subpath": subpath,
-        },
-    }
-    if access_mode == VolumeAccessMode.read_only:
-        exprected["read_only"] = "true"
-    assert volume.get_full_volume(container_name) == exprected
+@pytest.mark.parametrize("volume,expected", full_volumes)
+def test_full_volume(volume : TAllC, expected : str):
+    _, _, _, _, _, _, _, _, _, container_name = volume
+    assert create(volume[:-1]).get_full_volume(container_name) == expected
 
 ## EQUALITY
 
-@pytest.mark.parametrize("target1", map_targets)
-@pytest.mark.parametrize("target2", map_targets)
-@pytest.mark.parametrize("source1", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("source2", name_sources)
-@pytest.mark.parametrize("access_mode1", VolumeAccessMode)
-@pytest.mark.parametrize("access_mode2", VolumeAccessMode)
-def test_equal(
-    target1 : Path, source1 : Path, access_mode1 : VolumeAccessMode,
-    target2 : Path, source2 : Path, access_mode2 : VolumeAccessMode,
-):
-    volume1 = Volume(
-        target = target1,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode1,
-        source = source1,
-    )
-    volume2 = Volume(
-        target = target2,
-        volume_type = VolumeType.volume,
-        access_mode = access_mode2,
-        source = source2,
-    )
-    assert (volume1 == volume2) == (target1 == target2)
+@pytest.mark.parametrize("volume1,volume2", double_prod)
+def test_equal(volume1 : TAll, volume2 : TAll):
+    target1, _, _, _, _, _, _, _, _ = volume1
+    target2, _, _, _, _, _, _, _, _ = volume2
+    assert (create(volume1) == create(volume2)) == (target1 == target2)
 
 ## HASH
 
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-def test_hash(target : Path, source : Path, access_mode : VolumeAccessMode):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-    )
-    assert hash(volume) == hash(target)
+@pytest.mark.parametrize("volume", valid_volumes)
+def test_hash(volume : TAll):
+    target, _, _, _, _, _, _, _, _ = volume
+    assert hash(create(volume)) == hash(target)
 
 ## REPR
 
-@pytest.mark.parametrize("target", map_targets)
-@pytest.mark.parametrize("source", map_sources_nt + map_sources_posix)
-@pytest.mark.parametrize("access_mode", VolumeAccessMode)
-def test_repr(target : Path, source : Path, access_mode : VolumeAccessMode):
-    volume = Volume(
-        target = target,
-        volume_type = VolumeType.bind,
-        access_mode = access_mode,
-        source = source,
-    )
-    assert repr(volume) == f"{{'target': {repr(target)}, 'volume_type': {repr(VolumeType.bind)}, 'access_mode': {repr(access_mode)}, 'source': {repr(source)}, 'consistency': None, 'bind_options': None, 'volume_options': None, 'tmpfs_options': None, 'force_long_syntax': False}}"
+@pytest.mark.parametrize("volume", valid_volumes)
+def test_repr(volume : TAll):
+    check_repr_full(LABELS, volume, create)
