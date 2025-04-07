@@ -3,6 +3,7 @@ import pytest
 from itertools import product
 from pydantic import ValidationError
 
+from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration
 from SilvaViridis.Python.DockerComposeBuilder.Services import EnvVar
 
 from ..fixtures import (
@@ -55,7 +56,7 @@ def test_create_fail(env_var : TAll):
 ## API
 
 @pytest.mark.parametrize("env_var,container_name,expected", full_env_vars)
-def test_full_env_var(env_var : TAll, container_name : str, expected : str):
+def test_full_env_var(env_var : TAll, container_name : str, expected : Configuration):
     name, _ = env_var
     assert create(env_var).get_full_env_var(container_name) == {name: expected}
 

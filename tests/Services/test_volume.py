@@ -7,7 +7,7 @@ from random import choices as random_choices
 from SilvaViridis.Python.Common.Text import NonEmptyString
 from SilvaViridis.Python.Common.Unix import PermissionLevel
 
-from SilvaViridis.Python.DockerComposeBuilder.Common import OS, Path, SELinuxRelabelingOption
+from SilvaViridis.Python.DockerComposeBuilder.Common import Configuration, OS, Path, SELinuxRelabelingOption
 from SilvaViridis.Python.DockerComposeBuilder.Services import Volume, VolumeAccessMode, VolumeBindOptions, VolumeOptions, VolumeTmpfsOptions, VolumeType
 
 from ..fixtures import (
@@ -223,7 +223,7 @@ def test_create_fail(volume : TAll):
 ## API
 
 @pytest.mark.parametrize("volume,expected", full_volumes)
-def test_full_volume(volume : TAllC, expected : str):
+def test_full_volume(volume : TAllC, expected : Configuration):
     _, _, _, _, _, _, _, _, _, container_name = volume
     assert create(volume[:-1]).get_full_volume(container_name) == expected
 

@@ -65,20 +65,13 @@ full_images = [
 
 @pytest.mark.parametrize("img", valid_images)
 def test_create(img : TAll):
-    img_obj = create(img)
-    assert (
-        img_obj.image,
-        img_obj.tag,
-        img_obj.registry,
-        img_obj.project,
-        img_obj.digest,
-    ) == img
+    check_create_full(LABELS, img, create)
 
 
 @pytest.mark.xfail(raises = ValidationError)
 @pytest.mark.parametrize("img", invalid_images)
 def test_create_fail(img : TAll):
-    check_create_full(LABELS, img, create)
+    create(img)
 
 ## API
 
