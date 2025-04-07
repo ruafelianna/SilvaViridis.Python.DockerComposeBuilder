@@ -108,6 +108,9 @@ mode = "host"
 
 full_ports = [
     ((container_port_1, None, None, None, None, None, None, False), "80"),
+    ((container_port_1, None, None, None, None, None, None, True), {
+        "target": "80",
+    }),
     ((container_port_2, None, None, None, None, None, None, False), "8000-8010"),
     ((container_port_1, host_port_1, None, None, None, None, None, False), "8080:80"),
     ((container_port_2, host_port_2, None, None, None, None, None, False), "9000-9010:8000-8010"),
