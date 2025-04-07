@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Any
 
-from ..Common import Configuration, SELinuxRelabelingOption
+from ..Common import ConfigurationDict, SELinuxRelabelingOption
 
 class VolumeBindOptions(BaseModel):
     propagation : bool | None = Field(default = None)
@@ -15,8 +15,8 @@ class VolumeBindOptions(BaseModel):
     @validate_call
     def get_full_options(
         self,
-    ) -> Configuration:
-        bind : Configuration = {}
+    ) -> ConfigurationDict:
+        bind : ConfigurationDict = {}
 
         if self.propagation is not None:
             bind["propagation"] = str(self.propagation).lower()

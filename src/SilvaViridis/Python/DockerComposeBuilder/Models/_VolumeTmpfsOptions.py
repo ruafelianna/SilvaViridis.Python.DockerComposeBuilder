@@ -4,7 +4,7 @@ from typing import Any
 from SilvaViridis.Python.Common.Numbers import PositiveInt
 from SilvaViridis.Python.Common.Unix import UnixPermissions
 
-from ..Common import Configuration
+from ..Common import ConfigurationDict
 
 class VolumeTmpfsOptions(BaseModel):
     size : PositiveInt | None = Field(default = None)
@@ -17,8 +17,8 @@ class VolumeTmpfsOptions(BaseModel):
     @validate_call
     def get_full_options(
         self,
-    ) -> Configuration:
-        tmpfs : Configuration = {}
+    ) -> ConfigurationDict:
+        tmpfs : ConfigurationDict = {}
 
         if self.size is not None:
             tmpfs["size"] = str(self.size)

@@ -11,13 +11,13 @@ from ._VolumeBindOptions import VolumeBindOptions
 from ._VolumeOptions import VolumeOptions
 from ._VolumeTmpfsOptions import VolumeTmpfsOptions
 from ._VolumeType import VolumeType
-from ..Common import Configuration, Path
+from ..Common import Configuration, ConfigurationDict, ConfigurationStr, Path
 from ..Config import PathsConfig
 
 @validate_call
 def _check_options(
     options : IVolumeOptionsTypeHint | None
-) -> Configuration | None:
+) -> ConfigurationDict | None:
     if isinstance(options, IVolumeOptions):
         category = options.get_full_options()
         return category if len(category) > 0 else None
@@ -170,7 +170,7 @@ class Volume(BaseModel):
     def _get_short(
         self,
         source : str,
-    ) -> Configuration:
+    ) -> ConfigurationStr:
         access = "" \
             if self.access_mode == VolumeAccessMode.read_write \
             else self.access_mode.value
@@ -202,8 +202,8 @@ class Volume(BaseModel):
     def _get_long(
         self,
         source : str,
-    ) -> Configuration:
-        result : Configuration = {
+    ) -> ConfigurationDict:
+        result : ConfigurationDict = {
             "type": self.volume_type.name,
             "target": self.target.path,
         }

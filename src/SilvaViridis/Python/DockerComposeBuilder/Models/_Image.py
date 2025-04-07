@@ -5,7 +5,7 @@ from typing import Any
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from ..Common import Configuration, HashType
+from ..Common import ConfigurationStr, HashType
 
 class Image(BaseModel):
     image : NonEmptyString
@@ -28,14 +28,12 @@ class Image(BaseModel):
 
     def get_full_image(
         self,
-    ) -> Configuration:
+    ) -> ConfigurationStr:
         registry = "" if self.registry is None else f"{self.registry}/"
         project = "" if self.project is None else f"{self.project}/"
         tag = "" if self.tag is None else f":{self.tag}"
         digest = "" if self.digest is None else f"@{self.digest[0].name}:{self.digest[1]}"
-        return {
-            "image": f"{registry}{project}{self.image}{tag}{digest}",
-        }
+        return f"{registry}{project}{self.image}{tag}{digest}"
 
     def __eq__(
         self,

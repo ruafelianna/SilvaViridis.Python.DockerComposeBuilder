@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from ..Common import Configuration
+from ..Common import ConfigurationDict
 
 class EnvVar(BaseModel):
     name : NonEmptyString
@@ -17,7 +17,7 @@ class EnvVar(BaseModel):
     def get_full_env_var(
         self,
         constainer_name : str,
-    ) -> Configuration:
+    ) -> ConfigurationDict:
         return {
             self.name: f"${{{constainer_name}__{self.name}}}" \
                 if self.default_value is None \

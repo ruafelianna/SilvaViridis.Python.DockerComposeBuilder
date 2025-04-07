@@ -5,7 +5,7 @@ from typing import Any
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from ..Common import Configuration
+from ..Common import ConfigurationStr
 
 class Network(BaseModel):
     name : NonEmptyString
@@ -17,7 +17,7 @@ class Network(BaseModel):
     @validate_call
     def get_full_network(
         self,
-    ) -> Configuration:
+    ) -> ConfigurationStr:
         return self.name
 
     def __eq__(

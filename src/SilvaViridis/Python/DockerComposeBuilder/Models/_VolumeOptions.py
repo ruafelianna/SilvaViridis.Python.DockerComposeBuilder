@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Any
 
-from ..Common import Configuration, Path
+from ..Common import ConfigurationDict, Path
 
 class VolumeOptions(BaseModel):
     nocopy : bool | None = Field(default = None)
@@ -16,8 +16,8 @@ class VolumeOptions(BaseModel):
     @validate_call
     def get_full_options(
         self,
-    ) -> Configuration:
-        volume : Configuration = {}
+    ) -> ConfigurationDict:
+        volume : ConfigurationDict = {}
 
         if self.nocopy is not None:
             volume["nocopy"] = str(self.nocopy).lower()

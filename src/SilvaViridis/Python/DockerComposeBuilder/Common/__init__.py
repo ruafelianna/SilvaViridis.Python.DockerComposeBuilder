@@ -1,5 +1,7 @@
 from ._Types import (
     Configuration,
+    ConfigurationDict,
+    ConfigurationStr,
 )
 
 from .AppProtocol import AppProtocol
@@ -11,6 +13,8 @@ from .SELinuxRelabelingOption import SELinuxRelabelingOption
 __all__ = [
     "AppProtocol",
     "Configuration",
+    "ConfigurationDict",
+    "ConfigurationStr",
     "HashType",
     "OS",
     "Path",
