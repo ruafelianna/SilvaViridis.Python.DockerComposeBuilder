@@ -1,20 +1,21 @@
+from os.path import join as join_path
 from pydantic import BaseModel, ConfigDict
 from yaml import dump as to_yaml
 
-from SilvaViridis.Python.Common.Text import NonEmptyString
-
-from .Categories import Services
+from ._Container import Container
+from .Config import PathsConfig
 
 class Generator(BaseModel):
-    services : Services
+    containers : set[Container]
 
     model_config = ConfigDict(
-        arbitrary_types_allowed = True,
         frozen = True,
     )
 
     def generate(
         self,
-        container_name : NonEmptyString,
-    ) -> str:
-        return to_yaml(self.services.get_full_services(container_name))
+    ) -> None:
+        files = {c.container_name: to_yaml(c.get_full_container()) for c in self.containers}
+        for cname, file in files.items():
+            with open(join_path(PathsConfig.YmlOutputFolder, f"{cname}.yml"), "w") as fd:
+                fd.write(file)

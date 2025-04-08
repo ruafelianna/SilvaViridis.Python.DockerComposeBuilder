@@ -1,5 +1,9 @@
-from ._Environment import PathsConfig
+from ._Environment import (
+    NetworkConfig,
+    PathsConfig,
+)
 
 __all__ = [
+    "NetworkConfig",
     "PathsConfig",
 ]
