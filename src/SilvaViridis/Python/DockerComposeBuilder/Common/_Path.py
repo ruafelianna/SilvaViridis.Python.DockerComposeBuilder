@@ -9,7 +9,7 @@ from typing import Any
 from SilvaViridis.Python.Common.Collections import NonEmptySequence
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from .OS import OS
+from ._OS import OS
 
 _os_mapping : dict[OS, Callable[..., str]] = {
     OS.NT: nt_path_join,

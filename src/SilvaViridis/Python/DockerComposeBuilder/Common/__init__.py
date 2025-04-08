@@ -4,11 +4,11 @@ from ._Types import (
     ConfigurationStr,
 )
 
-from .AppProtocol import AppProtocol
-from .HashType import HashType
-from .OS import OS
-from .Path import Path
-from .SELinuxRelabelingOption import SELinuxRelabelingOption
+from ._AppProtocol import AppProtocol
+from ._HashType import HashType
+from ._OS import OS
+from ._Path import Path
+from ._SELinuxRelabelingOption import SELinuxRelabelingOption
 
 __all__ = [
     "AppProtocol",
