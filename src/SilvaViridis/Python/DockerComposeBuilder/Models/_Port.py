@@ -7,7 +7,7 @@ from typing import Any, Literal
 from SilvaViridis.Python.Common.Numbers import UInt16
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from SilvaViridis.Python.DockerComposeBuilder.Common import AppProtocol, Configuration
+from SilvaViridis.Python.DockerComposeBuilder.Common import AppProtocol, Configuration, ConfigurationDict, ConfigurationStr
 
 type TPort = UInt16
 type TPortRange = tuple[UInt16, UInt16]
@@ -100,8 +100,8 @@ class Port(BaseModel):
     @validate_call
     def _get_long(
         self,
-    ) -> Configuration:
-        result : Configuration = {
+    ) -> ConfigurationDict:
+        result : ConfigurationDict = {
             "target" : self._port_to_str(self.container_port),
         }
 
@@ -138,7 +138,7 @@ class Port(BaseModel):
     @validate_call
     def _get_short(
         self,
-    ) -> Configuration:
+    ) -> ConfigurationStr:
         host_ip = "" \
             if self.host_ip is None \
             else f"{self.host_ip}:"

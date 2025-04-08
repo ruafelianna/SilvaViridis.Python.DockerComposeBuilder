@@ -2,6 +2,7 @@ from ._Types import (
     Configuration,
     ConfigurationDict,
     ConfigurationStr,
+    ConfigurationTuple,
 )
 
 from ._AppProtocol import AppProtocol
@@ -15,6 +16,7 @@ __all__ = [
     "Configuration",
     "ConfigurationDict",
     "ConfigurationStr",
+    "ConfigurationTuple",
     "HashType",
     "OS",
     "Path",

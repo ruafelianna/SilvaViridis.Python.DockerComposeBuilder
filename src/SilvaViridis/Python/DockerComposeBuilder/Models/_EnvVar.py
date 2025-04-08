@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
 
-from ..Common import ConfigurationDict
+from ..Common import ConfigurationTuple
 
 class EnvVar(BaseModel):
     name : NonEmptyString
@@ -17,12 +17,13 @@ class EnvVar(BaseModel):
     def get_full_env_var(
         self,
         constainer_name : str,
-    ) -> ConfigurationDict:
-        return {
-            self.name: f"${{{constainer_name}__{self.name}}}" \
+    ) -> ConfigurationTuple[str]:
+        return (
+            self.name,
+            f"${{{constainer_name}__{self.name}}}" \
                 if self.default_value is None \
                 else self.default_value,
-        }
+        )
 
     def __eq__(
         self,
