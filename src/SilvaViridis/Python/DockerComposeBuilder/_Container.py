@@ -40,7 +40,7 @@ class Container(BaseModel):
     def get_env_var(
         self,
         name : NonEmptyString,
-    ) -> str | None:
+    ) -> str:
         for e in self.environment:
             if e.name == name:
                 return self._get_env_var_value(e)[1]
@@ -80,21 +80,7 @@ class Container(BaseModel):
         if len(self.volumes) > 0:
             services["volumes"] = [e.get_full_volume(self.container_name) for e in self.volumes]
 
-        categories : ConfigurationDict = {
-            "services": {
-                self.container_name: services,
-            }
-        }
-
-        networks : ConfigurationDict = {}
-
-        for network in self.networks:
-            networks[network.name] = {"external": "true"}
-
-        if len(networks) > 0:
-            categories["networks"] = networks
-
-        return categories
+        return services
 
     @validate_call
     def _get_env_var_value(
