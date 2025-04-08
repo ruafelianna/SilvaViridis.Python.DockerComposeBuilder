@@ -3,6 +3,7 @@ from ._Image import Image
 from ._IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
 from ._Network import Network
 from ._Port import Port, TPort, TPortRange
+from ._RestartPolicy import RestartPolicy
 from ._Volume import Volume
 from ._VolumeAccessMode import VolumeAccessMode
 from ._VolumeBindOptions import VolumeBindOptions
@@ -18,6 +19,7 @@ __all__ = [
     "IVolumeOptionsValidator",
     "Network",
     "Port",
+    "RestartPolicy",
     "TPort",
     "TPortRange",
     "Volume",
