@@ -47,12 +47,18 @@ class Container(BaseModel):
         raise ValueError(f"There is no env_var <{name}> in container <{self.container_name}>")
 
     @validate_call
+    def get_hostname(
+        self,
+    ) -> str:
+        return f"{self.container_name if self.hostname is None else self.hostname}.{NetworkConfig.BaseDomainName}"
+
+    @validate_call
     def get_full_container(
         self,
     ) -> ConfigurationDict:
         services : ConfigurationDict = {
             "container_name": self.container_name,
-            "hostname": f"{self.container_name if self.hostname is None else self.hostname}.{NetworkConfig.BaseDomainName}",
+            "hostname": self.get_hostname(),
         }
 
         if len(self.depends_on) > 0:

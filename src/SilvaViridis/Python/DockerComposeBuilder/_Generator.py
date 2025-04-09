@@ -25,6 +25,8 @@ class Generator(BaseModel):
 
         env : list[str] = []
 
+        hosts : list[str] = []
+
         for container in self.containers:
             services[container.container_name] = container.get_full_container()
 
@@ -37,6 +39,11 @@ class Generator(BaseModel):
                       value = value[2:-1]
                       env.append(f"{value}=")
 
+            hosts.append(f"127.0.0.1 {container.get_hostname()}")
+
+        env = sorted(env)
+        hosts = sorted(hosts)
+
         categories["services"] = services
 
         if len(networks) > 0:
@@ -47,3 +54,6 @@ class Generator(BaseModel):
 
         with open(join_path(PathsConfig.YmlOutputFolder, f".env.sample"), "w") as fd:
              fd.write("\n".join(env) + "\n")
+
+        with open(join_path(PathsConfig.YmlOutputFolder, f"hosts.txt"), "w") as fd:
+             fd.write("\n".join(hosts) + "\n")
