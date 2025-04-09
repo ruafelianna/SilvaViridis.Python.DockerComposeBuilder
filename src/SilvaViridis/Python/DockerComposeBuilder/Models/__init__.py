@@ -1,3 +1,4 @@
+from ._Build import Build
 from ._EnvVar import EnvVar
 from ._Image import Image
 from ._IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
@@ -12,6 +13,7 @@ from ._VolumeTmpfsOptions import VolumeTmpfsOptions
 from ._VolumeType import VolumeType
 
 __all__ = [
+    "Build",
     "EnvVar",
     "Image",
     "IVolumeOptions",

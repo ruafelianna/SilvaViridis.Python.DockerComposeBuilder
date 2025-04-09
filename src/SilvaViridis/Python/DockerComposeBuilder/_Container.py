@@ -8,9 +8,11 @@ from SilvaViridis.Python.Common.Text import NonEmptyString
 from SilvaViridis.Python.DockerComposeBuilder.Common import ConfigurationDict, ConfigurationTuple
 
 from .Config import NetworkConfig
-from .Models import EnvVar, Image, Network, Port, RestartPolicy, Volume
+from .Models import Build, EnvVar, Image, Network, Port, RestartPolicy, Volume
 
 class Container(BaseModel):
+    build : Build | None = Field(default = None)
+    command : NonEmptyString | None = Field(default = None)
     container_name : NonEmptyString
     depends_on : set[Container] = Field(default = set())
     environment : set[EnvVar] = Field(default = set())
@@ -60,6 +62,12 @@ class Container(BaseModel):
             "container_name": self.container_name,
             "hostname": self.get_hostname(),
         }
+
+        if self.build is not None:
+            services["build"] = self.build.get_full_build()
+
+        if self.command is not None:
+            services["command"] = self.command
 
         if len(self.depends_on) > 0:
             services["depends_on"] = [d.container_name for d in self.depends_on]
