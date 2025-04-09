@@ -52,7 +52,7 @@ class Container(BaseModel):
     def get_hostname(
         self,
     ) -> str:
-        return f"{self.container_name if self.hostname is None else self.hostname}.{NetworkConfig.BaseDomainName}"
+        return f"{self.container_name if self.hostname is None else self.hostname}.{NetworkConfig.BaseDomainName()}"
 
     @validate_call
     def get_full_container(

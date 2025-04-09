@@ -101,7 +101,7 @@ class Volume(BaseModel):
         return Path.join(
             source.os,
             (
-                PathsConfig.BaseDataFolder,
+                PathsConfig.BaseDataFolder(),
                 container_name,
                 source,
             )

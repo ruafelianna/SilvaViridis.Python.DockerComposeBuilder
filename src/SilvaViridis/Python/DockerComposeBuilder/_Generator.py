@@ -49,11 +49,13 @@ class Generator(BaseModel):
         if len(networks) > 0:
             categories["networks"] = {n.name: {"external": "true"} for n in networks}
 
-        with open(join_path(PathsConfig.YmlOutputFolder, f"docker-compose.yml"), "w") as fd:
+        output_folder = PathsConfig.YmlOutputFolder()
+
+        with open(join_path(output_folder, "docker-compose.yml"), "w") as fd:
             fd.write(to_yaml(categories))
 
-        with open(join_path(PathsConfig.YmlOutputFolder, f".env.sample"), "w") as fd:
+        with open(join_path(output_folder, ".env.sample"), "w") as fd:
              fd.write("\n".join(env) + "\n")
 
-        with open(join_path(PathsConfig.YmlOutputFolder, f"hosts.txt"), "w") as fd:
+        with open(join_path(output_folder, "hosts.txt"), "w") as fd:
              fd.write("\n".join(hosts) + "\n")

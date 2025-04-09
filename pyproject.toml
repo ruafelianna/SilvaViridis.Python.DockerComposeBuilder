@@ -1,6 +1,6 @@
 [project]
 name = "SilvaViridis.Python.DockerComposeBuilder"
-version = "0.1.0"
+version = "0.1.1"
 description = "Template python project"
 authors = [
     {name = "Maria Sorokina", email = "ruafelianna@ya.ru"},
