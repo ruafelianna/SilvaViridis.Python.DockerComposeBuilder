@@ -58,7 +58,7 @@ def test_create_fail(env_var : TAll):
 @pytest.mark.parametrize("env_var,container_name,expected", full_env_vars)
 def test_full_env_var(env_var : TAll, container_name : str, expected : Configuration):
     name, _ = env_var
-    assert create(env_var).get_full_env_var(container_name) == {name: expected}
+    assert create(env_var).get_full_env_var(container_name) == (name, expected)
 
 ## EQUALITY
 

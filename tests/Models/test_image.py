@@ -77,7 +77,7 @@ def test_create_fail(img : TAll):
 
 @pytest.mark.parametrize("img,expected", full_images)
 def test_full_image(img : TAll, expected : Configuration):
-    assert create(img).get_full_image() == {"image": expected}
+    assert create(img).get_full_image() == expected
 
 ## EQUALITY
 
