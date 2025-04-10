@@ -8,7 +8,7 @@ from .Config import PathsConfig
 from .Models import Network
 
 class Generator(BaseModel):
-    containers : set[Container]
+    containers : frozenset[Container]
 
     model_config = ConfigDict(
         frozen = True,

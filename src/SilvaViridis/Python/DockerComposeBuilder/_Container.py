@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, validate_call
+from pydantic import BaseModel, ConfigDict, Field, validate_call
 from typing import Any
 
 from SilvaViridis.Python.Common.Text import NonEmptyString
@@ -14,15 +14,19 @@ class Container(BaseModel):
     build : Build | None = Field(default = None)
     command : NonEmptyString | None = Field(default = None)
     container_name : NonEmptyString
-    depends_on : set[Container] = Field(default = set())
-    environment : set[EnvVar] = Field(default = set())
-    environment_other : dict[Container, set[EnvVar]] = Field(default = {})
+    depends_on : frozenset[Container] = Field(default = frozenset())
+    environment : frozenset[EnvVar] = Field(default = frozenset())
+    environment_other : dict[Container, frozenset[EnvVar]] = Field(default = {})
     hostname : NonEmptyString | None = Field(default = None)
     image : Image | None = Field(default = None)
-    networks : set[Network] = Field(default = set())
-    ports : set[Port] = Field(default = set())
+    networks : frozenset[Network] = Field(default = frozenset())
+    ports : frozenset[Port] = Field(default = frozenset())
     restart : RestartPolicy | None = Field(default = None)
-    volumes : set[Volume] = Field(default = set())
+    volumes : frozenset[Volume] = Field(default = frozenset())
+
+    model_config = ConfigDict(
+        frozen = True,
+    )
 
     def __eq__(
         self,
