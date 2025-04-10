@@ -5,7 +5,26 @@ Template python project
 ### Usage
 
 ```python
-"It will be here one day."
+from SilvaViridis.Python.DockerComposeBuilder import DockerComposeGenerator
+from SilvaViridis.Python.DockerComposeBuilder.Models import Container, Image, RestartPolicy
+
+adminer = Container(
+    container_name = "adminer",
+    image = Image(image = "adminer", tag = "5"),
+    restart = RestartPolicy.always,
+)
+
+yml = DockerComposeGenerator(containers = frozenset([adminer])).generate()
+
+print(yml)
+```
+
+```
+services:
+  adminer:
+    container_name: adminer
+    image: adminer:5
+    restart: always
 ```
 
 ### Setup the Project
