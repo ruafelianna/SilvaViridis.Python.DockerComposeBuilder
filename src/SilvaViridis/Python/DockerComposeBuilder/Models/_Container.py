@@ -8,7 +8,6 @@ from SilvaViridis.Python.Common.Text import NonEmptyString
 from SilvaViridis.Python.DockerComposeBuilder.Common import ConfigurationDict, ConfigurationTuple
 
 from . import Build, EnvVar, Image, Network, Port, RestartPolicy, Volume
-from ..Config import NetworkConfig
 
 class Container(BaseModel):
     build : Build | None = Field(default = None)
@@ -53,18 +52,11 @@ class Container(BaseModel):
         raise ValueError(f"There is no env_var <{name}> in container <{self.container_name}>")
 
     @validate_call
-    def get_hostname(
-        self,
-    ) -> str:
-        return f"{self.container_name if self.hostname is None else self.hostname}.{NetworkConfig.BaseDomainName()}"
-
-    @validate_call
     def get_full_container(
         self,
     ) -> ConfigurationDict:
         services : ConfigurationDict = {
             "container_name": self.container_name,
-            "hostname": self.get_hostname(),
         }
 
         if self.build is not None:
@@ -82,6 +74,9 @@ class Container(BaseModel):
             for env_var in self.environment:
                 var = self._get_env_var_value(env_var)
                 services["environment"][var[0]] = var[1]
+
+        if self.hostname is not None:
+            services["host"] = self.hostname
 
         if self.image is not None:
             services["image"] = self.image.get_full_image()
