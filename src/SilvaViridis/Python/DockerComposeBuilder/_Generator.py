@@ -2,10 +2,9 @@ from os.path import join as join_path
 from pydantic import BaseModel, ConfigDict
 from yaml import dump as to_yaml
 
-from ._Container import Container
 from .Common import ConfigurationDict
 from .Config import PathsConfig
-from .Models import Network
+from .Models import Container, Network
 
 class Generator(BaseModel):
     containers : frozenset[Container]

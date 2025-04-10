@@ -1,4 +1,5 @@
 from ._Build import Build
+from ._Container import Container
 from ._EnvVar import EnvVar
 from ._Image import Image
 from ._IVolumeOptions import IVolumeOptions, IVolumeOptionsTypeHint, IVolumeOptionsValidator
@@ -14,6 +15,7 @@ from ._VolumeType import VolumeType
 
 __all__ = [
     "Build",
+    "Container",
     "EnvVar",
     "Image",
     "IVolumeOptions",
