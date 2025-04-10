@@ -7,7 +7,13 @@ from SilvaViridis.Python.Common.Text import NonEmptyString
 
 from SilvaViridis.Python.DockerComposeBuilder.Common import ConfigurationDict, ConfigurationTuple
 
-from . import Build, EnvVar, Image, Network, Port, RestartPolicy, Volume
+from ._Build import Build
+from ._EnvVar import EnvVar
+from ._Image import Image
+from ._Network import Network
+from ._Port import Port
+from ._RestartPolicy import RestartPolicy
+from ._Volume import Volume
 
 class Container(BaseModel):
     build : Build | None = Field(default = None)
