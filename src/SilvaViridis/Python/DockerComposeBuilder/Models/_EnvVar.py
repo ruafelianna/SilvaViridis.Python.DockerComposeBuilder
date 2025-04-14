@@ -18,6 +18,7 @@ class EnvVar(BaseModel):
         self,
         constainer_name : str,
     ) -> ConfigurationTuple[str]:
+        constainer_name = constainer_name.replace(".", "_")
         return (
             self.name,
             f"${{{constainer_name}__{self.name}}}" \
