@@ -1,8 +1,15 @@
 from pydantic import BaseModel, ConfigDict
-from yaml import dump as to_yaml
+from yaml import Dumper, ScalarNode, dump as to_yaml, add_representer
 
 from .Common import ConfigurationDict
 from .Models import Container, Network, Volume, VolumeType
+
+def str_presenter(dumper : Dumper, data : str) -> ScalarNode:
+    if len(data.splitlines()) > 1:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style='|')
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+add_representer(str, str_presenter)
 
 class DockerComposeGenerator(BaseModel):
     containers : frozenset[Container]
